@@ -38,10 +38,15 @@ endif()
 
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
 
+# Export no symbols by default
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+
 if(LINUX)
-	set(common_linker_flags "-Wl,--no-undefined")
-	set(CMAKE_MODULE_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Module Library Linker Flags")
-	set(CMAKE_SHARED_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Shared Library Linker Flags")
+    set(common_linker_flags "-Wl,--no-undefined")
+    set(CMAKE_MODULE_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Module Library Linker Flags")
+    set(CMAKE_SHARED_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Shared Library Linker Flags")
 endif()
 
 # Output directories
@@ -61,7 +66,7 @@ if(MAC)
     option(SMTG_BUILD_UNIVERSAL_BINARY "Build universal binary (32 & 64 bit)" OFF)
     if(SMTG_BUILD_UNIVERSAL_BINARY)
         set(CMAKE_OSX_ARCHITECTURES "x86_64;i386" CACHE STRING "macOS universal binary")
-		set(CMAKE_XCODE_ATTRIBUTE_ARCHS "$(ARCHS_STANDARD_32_64_BIT)")
+	    set(CMAKE_XCODE_ATTRIBUTE_ARCHS "$(ARCHS_STANDARD_32_64_BIT)")
         set(CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "$<$<CONFIG:Debug>:YES>$<$<CONFIG:Release>:NO>")
     endif()
 endif()
@@ -82,7 +87,7 @@ add_compile_options($<$<CONFIG:Release>:-DRELEASE=1>)
 if(WIN)
 	add_compile_options(/MP)
 	add_compile_options($<$<CONFIG:Debug>:/ZI>)
-	if(SMTG_USE_STATIC_CRT)
+	if (SMTG_USE_STATIC_CRT)
 		# /MTd = MultiThreaded Debug Runtime
 		# /MT  = MultiThreaded Runtime
 		add_compile_options($<$<CONFIG:Debug>:/MTd>)

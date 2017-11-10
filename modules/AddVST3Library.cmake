@@ -17,6 +17,16 @@ function(smtg_run_vst_validator target)
     add_custom_command(TARGET ${target} POST_BUILD COMMAND $<TARGET_FILE:validator> "${TARGET_PATH}" WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endfunction()
 
+# Strip symbols for Linux
+function (smtg_strip_symbols target)
+    add_custom_command(TARGET ${target} POST_BUILD
+        # Create a target.so.dbg file with debug information
+        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
+        COMMAND ${CMAKE_COMMAND_STRIP} strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
+    )
+endfunction()
+
 #-------------------------------------------------------------------------------
 # VST3 Library Template
 #-------------------------------------------------------------------------------
@@ -57,6 +67,11 @@ function(smtg_add_vst3plugin target sdkroot)
             COMMAND ${CMAKE_COMMAND} -E make_directory
             "${VST3_OUTPUT_DIR}/${target}.vst3/Contents/Resources"
         )
+
+        # Strip symbols in Release config
+        if(${CMAKE_BUILD_TYPE} MATCHES Release)
+            smtg_strip_symbols(${target})
+        endif()
     endif()
     if(SMTG_RUN_VST_VALIDATOR)
         smtg_run_vst_validator(${target})
