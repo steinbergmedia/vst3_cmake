@@ -42,9 +42,16 @@ if(LINUX)
 endif()
 
 # Output directories
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+# XCode is creating the "Debug/Release" folder on its own and does not need to be added.
+if(WIN OR (MAC AND CMAKE_GENERATOR STREQUAL Xcode))
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+else ()
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
+endif()
 
 if(MAC)
     if(NOT DEFINED ENV{XCODE_VERSION})
@@ -82,7 +89,9 @@ add_compile_options($<$<CONFIG:RelWithDebInfo>:-DRELEASE=1>)
 
 if(WIN)
     add_compile_options(/MP)                            # Multi-processor Compilation
-    add_compile_options($<$<CONFIG:Debug>:/ZI>)         # Program Database for Edit And Continue
+    if(NOT ${CMAKE_GENERATOR} MATCHES "ARM")
+        add_compile_options($<$<CONFIG:Debug>:/ZI>)     # Program Database for Edit And Continue
+    endif()
     if (SMTG_USE_STATIC_CRT)
         add_compile_options($<$<CONFIG:Debug>:/MTd>)    # Runtime Library: /MTd = MultiThreaded Debug Runtime
         add_compile_options($<$<CONFIG:Release>:/MT>)   # Runtime Library: /MT  = MultiThreaded Runtime
