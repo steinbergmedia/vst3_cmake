@@ -1,9 +1,6 @@
 
 include(SetupVST3LibraryDefaultPath)
 
-# do not build VST 2 by default
-option(SMTG_CREATE_VST2_VERSION "Create the VST2 version of AGain" OFF)
-
 # use by default SMTG_ as prefix for ASSERT,...
 option(SMTG_RENAME_ASSERT "Rename ASSERT to SMTG_ASSERT" ON)
 
@@ -12,6 +9,8 @@ option(SMTG_ADD_VSTGUI "Add VSTGUI Support" ON)
 
 # Add VST3 Plug-ins Samples
 option(SMTG_ADD_VST3_PLUGINS_SAMPLES "Add VST3 Plug-ins Samples to the solution" ON)
+# do not build AGain VST 2 by default
+option(SMTG_CREATE_VST2_AGAIN_SAMPLE_VERSION "Legacy: Create the VST2 version of the Sample Plug-in AGain, be sure that you have copied the VST2 interfaces into the folder VST_SDK/VST3_SDK/pluginterfaces/vst2.x" OFF)
 
 # Add VST3 Hosting Samples
 option(SMTG_ADD_VST3_HOSTING_SAMPLES "Add VST3 Hosting Samples to the solution" ON)
@@ -26,8 +25,10 @@ option(SMTG_CREATE_VST3_LINK "Create symbolic link for each VST3 plug-in in ${VS
 
 # Create Bundle on Windows for the VST3 Plug-ins
 if(WIN)
-    option(SMTG_CREATE_BUNDLE_FOR_WINDOWS "Create Bundle on Windows for the VST3 Plug-ins (New since 3.6.10!)" OFF)
+    option(SMTG_CREATE_BUNDLE_FOR_WINDOWS "Create Bundle on Windows for the VST3 Plug-ins (New since 3.6.10!)" ON)
 endif()
+
+option(SMTG_ENABLE_TARGET_VARS_LOG "Enable Target variables Logging" OFF)
 
 # Run the Validator after each new compilation of VST3 plug-ins
 option(SMTG_RUN_VST_VALIDATOR "Run VST validator on VST3 plug-ins" ON)

@@ -1,8 +1,16 @@
 
 macro(setupVstGuiSupport)
     set(VSTGUI_DISABLE_UNITTESTS 1)
-    set(VSTGUI_DISABLE_STANDALONE 1)
-    set(VSTGUI_DISABLE_STANDALONE_EXAMPLES 1)
+    set(VSTGUI_STANDALONE_EXAMPLES OFF)
+    if(SMTG_BUILD_UNIVERSAL_BINARY)
+        set(VSTGUI_STANDALONE OFF)
+        set(VSTGUI_TOOLS OFF)
+    elseif(WIN AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+        set(VSTGUI_STANDALONE OFF)
+        set(VSTGUI_TOOLS OFF)
+    else()
+        set(VSTGUI_STANDALONE ON)
+    endif()
     add_subdirectory(vstgui4/vstgui)
 
     set(VST3_VSTGUI_SOURCES
@@ -33,5 +41,12 @@ macro(setupVstGuiSupport)
             find_library(CARBON_FRAMEWORK Carbon)
             target_link_libraries(vstgui_support PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK})
         endif()
+    endif()
+    if(WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+        target_compile_definitions(vstgui_support PUBLIC SMTG_MODULE_IS_BUNDLE=1)
+        target_sources(vstgui_support PRIVATE
+            ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp
+           ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.h
+        )
     endif()
 endmacro()
