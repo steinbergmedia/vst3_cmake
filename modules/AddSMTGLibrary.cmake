@@ -2,6 +2,7 @@
 # TODO: Rename SMTG_VST3_TARGET_PATH
 
 include(CMakePrintHelpers)
+include(UniversalBinary)
 
 # Prints out all relevant properties of a target for debugging.
 #
@@ -32,7 +33,7 @@ function (smtg_strip_symbols target)
     )
 endfunction()
 
-#! smtg_strip_symbols : Strips all symbols on and creates debug file on linux 
+#! smtg_strip_symbols : Strips all symbols on and creates debug file on Linux 
 #
 # @param target The target whose build symbols will be stripped
 function (smtg_strip_symbols_with_dbg target)
@@ -56,7 +57,7 @@ function (smtg_create_link_to_plugin target)
 
     get_target_property(TARGET_SOURCE       ${target} SMTG_PLUGIN_PACKAGE_PATH)
     get_target_property(TARGET_DESTINATION  ${target} SMTG_PLUGIN_USER_DEFINED_TARGET)
-    if(WIN)
+    if(SMTG_WIN)
         get_target_property(PLUGIN_BINARY_DIR   ${target} SMTG_PLUGIN_BINARY_DIR)
         get_target_property(PLUGIN_PACKAGE_NAME ${target} SMTG_PLUGIN_PACKAGE_NAME)
 
@@ -85,13 +86,13 @@ endfunction()
 # Customizes folder icon on windows by copying desktop.ini and PlugIn.ico into the package.
 #
 # @param target The target whose folder icon will be customized.
-function(smtg_add_folder_icon target)
+function(smtg_add_folder_icon target icon)
     get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
     add_custom_command(TARGET ${target}
         COMMENT "Copy PlugIn.ico and desktop.ini and change their attributes."   
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-            ${PROJECT_SOURCE_DIR}/doc/artwork/VST_Logo_Steinberg.ico
+            ${icon}
             ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
         COMMAND ${CMAKE_COMMAND} -E copy
             ${PROJECT_SOURCE_DIR}/cmake/templates/desktop.ini.in
@@ -108,25 +109,24 @@ endfunction()
 #
 # @param target The target to which the main entry point will be added.
 function(smtg_add_library_main target)
-    if(NOT public_sdk_SOURCE_DIR)
-        message(FATAL_ERROR "The variable public_sdk_SOURCE_DIR is not set. Please specify the path to public.sdk's source dir.")
-    endif()
-    if(MAC)
-        target_sources (${target} 
-            PRIVATE 
-                ${public_sdk_SOURCE_DIR}/source/main/macmain.cpp
-        )
-        smtg_set_exported_symbols(${target} ${public_sdk_SOURCE_DIR}/source/main/macexport.exp)
-    elseif(WIN)
-        target_sources (${target} 
-            PRIVATE 
-                ${public_sdk_SOURCE_DIR}/source/main/dllmain.cpp
-        )
-    elseif(LINUX)
-        target_sources (${target} 
-            PRIVATE 
-                ${public_sdk_SOURCE_DIR}/source/main/linuxmain.cpp
-        )
+    if(public_sdk_SOURCE_DIR)
+        if(SMTG_MAC)
+            target_sources (${target} 
+                PRIVATE 
+                    ${public_sdk_SOURCE_DIR}/source/main/macmain.cpp
+            )
+            smtg_set_exported_symbols(${target} ${public_sdk_SOURCE_DIR}/source/main/macexport.exp)
+        elseif(SMTG_WIN)
+            target_sources (${target} 
+                PRIVATE 
+                    ${public_sdk_SOURCE_DIR}/source/main/dllmain.cpp
+            )
+        elseif(SMTG_LINUX)
+            target_sources (${target} 
+                PRIVATE 
+                    ${public_sdk_SOURCE_DIR}/source/main/linuxmain.cpp
+            )
+        endif()
     endif()
 endfunction()
 
@@ -150,9 +150,17 @@ endfunction()
 # @param extension The package's extension
 function(smtg_make_plugin_package target extension)
     string(TOUPPER ${extension} PLUGIN_EXTENSION_UPPER)
+
+    if(SMTG_CUSTOM_BINARY_LOCATION)
+        set(SMTG_PLUGIN_BINARY_LOCATION ${SMTG_CUSTOM_BINARY_LOCATION})
+    else()
+        set(SMTG_PLUGIN_BINARY_LOCATION ${CMAKE_BINARY_DIR})
+    endif()
+
+
     set_target_properties(${target} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY        ${CMAKE_BINARY_DIR}/${PLUGIN_EXTENSION_UPPER}
-        SMTG_PLUGIN_BINARY_DIR          ${CMAKE_BINARY_DIR}/${PLUGIN_EXTENSION_UPPER}
+        LIBRARY_OUTPUT_DIRECTORY        ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
+        SMTG_PLUGIN_BINARY_DIR          ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
         SMTG_PLUGIN_EXTENSION           ${extension}
         SMTG_PLUGIN_PACKAGE_NAME        ${target}.${extension}
         SMTG_PLUGIN_PACKAGE_CONTENTS    Contents
@@ -167,7 +175,7 @@ function(smtg_make_plugin_package target extension)
 
     smtg_add_library_main(${target})
 
-    if(MAC)
+    if(SMTG_MAC)
         set_target_properties(${target} PROPERTIES
             BUNDLE TRUE
         )
@@ -189,18 +197,28 @@ function(smtg_make_plugin_package target extension)
         target_link_libraries(${target} PRIVATE "-framework CoreFoundation")
         smtg_setup_universal_binary(${target})
 
-    elseif(WIN)
+    elseif(SMTG_WIN)
+        if(SMTG_CUSTOM_BINARY_LOCATION)
+            set(PLUGIN_PACKAGE_PATH ${PLUGIN_BINARY_DIR}/${PLUGIN_PACKAGE_NAME})
+        else()
+            set(PLUGIN_PACKAGE_PATH ${PLUGIN_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${PLUGIN_PACKAGE_NAME})
+        endif()
         set_target_properties(${target} PROPERTIES 
-            SUFFIX              .${PLUGIN_EXTENSION}
-            LINK_FLAGS          /EXPORT:GetPluginFactory
-            SMTG_PLUGIN_PACKAGE_PATH      
-                ${PLUGIN_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${PLUGIN_PACKAGE_NAME}
+            SUFFIX                      .${PLUGIN_EXTENSION}
+            LINK_FLAGS                  /EXPORT:GetPluginFactory
+            SMTG_PLUGIN_PACKAGE_PATH    ${PLUGIN_PACKAGE_PATH}
         )
         
         # In order not to have the PDB inside the plug-in package in release builds, we specify a different location.
+     
+        if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+            set(WIN_PDB WIN_PDB32)
+        else()
+            set(WIN_PDB WIN_PDB64)
+        endif()
         set_target_properties(${target} PROPERTIES
             PDB_OUTPUT_DIRECTORY
-                ${PROJECT_BINARY_DIR}/WIN_PDB
+                ${PROJECT_BINARY_DIR}/${WIN_PDB}
         )
 
         # Create Bundle on Windows
@@ -213,13 +231,21 @@ function(smtg_make_plugin_package target extension)
             get_target_property(PLUGIN_PACKAGE_CONTENTS ${target} SMTG_PLUGIN_PACKAGE_CONTENTS)
             foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
                 string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
-                set_target_properties(${target} PROPERTIES 
-                    LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}
-                        ${PLUGIN_BINARY_DIR}/${OUTPUTCONFIG}/${PLUGIN_PACKAGE_NAME}/${PLUGIN_PACKAGE_CONTENTS}/${WIN_ARCHITECTURE_NAME}
-            )
+                if(SMTG_CUSTOM_BINARY_LOCATION)
+                    set_target_properties(${target} PROPERTIES 
+                        LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}
+                            ${PLUGIN_BINARY_DIR}/${PLUGIN_PACKAGE_NAME}/${PLUGIN_PACKAGE_CONTENTS}/${WIN_ARCHITECTURE_NAME}
+                        )
+                else()
+                    set_target_properties(${target} PROPERTIES 
+                        LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}
+                            ${PLUGIN_BINARY_DIR}/${OUTPUTCONFIG}/${PLUGIN_PACKAGE_NAME}/${PLUGIN_PACKAGE_CONTENTS}/${WIN_ARCHITECTURE_NAME}
+                        )
+                endif()
             endforeach()
-                
-            smtg_add_folder_icon(${target})
+            if(EXISTS ${SMTG_PACKAGE_ICON_PATH})
+                smtg_add_folder_icon(${target} ${SMTG_PACKAGE_ICON_PATH})
+            endif()
         endif()
         # Disable warning LNK4221: "This object file does not define any previously undefined public symbols...".
         # Enable "Generate Debug Information" in release config by setting "/Zi" and "/DEBUG" flags.
@@ -234,7 +260,7 @@ function(smtg_make_plugin_package target extension)
                     LINK_FLAGS_RELEASE /DEBUG
             )
         endif()
-    elseif(LINUX)
+    elseif(SMTG_LINUX)
         smtg_get_linux_architecture_name() # Sets var LINUX_ARCHITECTURE_NAME
         message(STATUS "Linux architecture name is ${LINUX_ARCHITECTURE_NAME}.")
 
@@ -262,7 +288,7 @@ endfunction()
 # @param input_file resource file
 # @param ARGV2 destination subfolder
 function(smtg_add_plugin_resource target input_file)
-    if (LINUX OR (WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
+    if (SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
         get_target_property(PLUGIN_PACKAGE_RESOURCES ${target} SMTG_PLUGIN_PACKAGE_RESOURCES)
         set(destination_folder "${PLUGIN_PACKAGE_PATH}/${PLUGIN_PACKAGE_RESOURCES}")
@@ -280,13 +306,17 @@ function(smtg_add_plugin_resource target input_file)
             ${CMAKE_CURRENT_LIST_DIR}/${input_file}
             ${destination_folder}
         )
-    elseif(MAC)
+    elseif(SMTG_MAC)
         target_sources(${target} PRIVATE ${input_file})
         set(destination_folder "Resources")
         if(ARGV2)
             set(destination_folder "${destination_folder}/${ARGV2}")
         endif()
-        set_source_files_properties(${input_file} PROPERTIES MACOSX_PACKAGE_LOCATION "${destination_folder}")
+
+        set_source_files_properties(${input_file} 
+            PROPERTIES 
+                MACOSX_PACKAGE_LOCATION "${destination_folder}"
+        )
     endif()
 endfunction()
 
@@ -298,5 +328,32 @@ endfunction()
 # @param snapshot The snapshot to be added.
 function(smtg_add_plugin_snapshot target snapshot)
     get_target_property(PLUGIN_PACKAGE_SNAPSHOTS ${target} SMTG_PLUGIN_PACKAGE_SNAPSHOTS)
-    smtg_add_plugin_resource ("${target}" "${snapshot}" "${PLUGIN_PACKAGE_SNAPSHOTS}") 
+    smtg_add_plugin_resource (${target} ${snapshot} ${PLUGIN_PACKAGE_SNAPSHOTS}) 
+endfunction()
+
+# Adds multiple resources to target.
+#
+# Usage:
+#  smtg_add_vst3_resources (target
+#    RESOURCES
+#      bitmap0.png
+#      bitmap1.png
+#    OUTPUT_SUBDIRECTORY
+#      Graphics
+#  )
+# This adds both bitmaps to <Bundle>/Resources/Graphics
+#
+# @param target The target to which the resources will be added. 
+function(smtg_add_vst3_resources target)
+    cmake_parse_arguments(
+        PARSED_ARGS # Prefix of output variables e.g. PARSED_ARGS_RESOURCES
+        ""          # List of names for boolean arguments
+        "OUTPUT_SUBDIRECTORY" # List of names for mono-valued arguments
+        "RESOURCES" # List of names for multi-valued arguments resp. lists
+        ${ARGN}     # Arguments of the function to parse
+    )
+
+    foreach(rsrc ${PARSED_ARGS_RESOURCES})
+        smtg_add_plugin_resource (${target} ${rsrc} ${PARSED_ARGS_OUTPUT_SUBDIRECTORY}) 
+    endforeach()
 endfunction()

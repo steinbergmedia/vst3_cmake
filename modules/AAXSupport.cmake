@@ -1,7 +1,7 @@
 
 macro(setupAaxSupport)
     # AAX SDK Location
-    if(MAC OR WIN)
+    if(SMTG_MAC OR SMTG_WIN)
         if(NOT SMTG_AAX_SDK_PATH)
             # Check if the AAX SDK is next to the VST3SDK:
             if(EXISTS "${SDK_ROOT}/../external.avid.aax/Interfaces/AAX.h")

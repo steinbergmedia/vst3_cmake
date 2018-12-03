@@ -10,8 +10,8 @@ include(CMakeParseArguments)
 #-------------------------------------------------------------------------------
 
 function(smtg_set_bundle target)
-    if(NOT MAC)
-        message(FATAL_ERROR "smtg_set_bundle only works on macOS, use it in an if(MAC) block")
+    if(NOT SMTG_MAC)
+        message(FATAL_ERROR "smtg_set_bundle only works on macOS, use it in an if(SMTG_MAC) block")
     endif()
 
     cmake_parse_arguments(ARG "PREPROCESS" "EXTENSION;INFOPLIST" "RESOURCES;PREPROCESSOR_FLAGS" ${ARGN})

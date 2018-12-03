@@ -19,7 +19,7 @@ find_path(LIBJACK_INCLUDE_DIR
         "C:/Program Files (x86)/Jack/includes"
 )
 
-if(WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(EXTENSION 64)
 endif()
 

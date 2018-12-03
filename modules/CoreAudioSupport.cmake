@@ -1,6 +1,6 @@
 
 macro(setupCoreAudioSupport)
-    if(MAC AND XCODE)
+    if(SMTG_MAC AND XCODE)
         set(SMTG_IOS_DEVELOPMENT_TEAM "" CACHE STRING "Needed for building the InterAppAudio and AUv3 examples for iOS")
         if(NOT SMTG_COREAUDIO_SDK_PATH)
             # Check if the CoreAudio SDK is next to the VST3SDK:

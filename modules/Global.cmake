@@ -11,20 +11,33 @@ endif()
 #-------------------------------------------------------------------------------
 # Platform Detection
 #-------------------------------------------------------------------------------
+get_directory_property(hasParent PARENT_DIRECTORY)
 
 if(APPLE)
-    set(MAC TRUE)
+    if(hasParent)
+        set(SMTG_MAC TRUE PARENT_SCOPE)
+    else()
+        set(SMTG_MAC TRUE)
+    endif()
 elseif(WIN32)
-    set(WIN TRUE)
+    if(hasParent)
+        set(SMTG_WIN TRUE PARENT_SCOPE)
+    else()
+        set(SMTG_WIN TRUE)
+    endif()
 elseif(UNIX)
-    set(LINUX TRUE)
+    if(hasParent)
+        set(SMTG_LINUX TRUE PARENT_SCOPE)
+    else()
+        set(SMTG_LINUX TRUE)
+    endif()
 endif()
 
 #-------------------------------------------------------------------------------
 # Global Settings
 #-------------------------------------------------------------------------------
 
-if(WIN)
+if(SMTG_WIN)
     option(SMTG_USE_STATIC_CRT "use static CRuntime on Windows (option /MT)" OFF)
 endif()
 
@@ -35,7 +48,7 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
-if(LINUX)
+if(SMTG_LINUX)
     set(common_linker_flags "-Wl,--no-undefined")
     set(CMAKE_MODULE_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Module Library Linker Flags")
     set(CMAKE_SHARED_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Shared Library Linker Flags")
@@ -43,7 +56,7 @@ endif()
 
 # Output directories
 # XCode is creating the "Debug/Release" folder on its own and does not need to be added.
-if(WIN OR (MAC AND CMAKE_GENERATOR STREQUAL Xcode))
+if(SMTG_WIN OR (SMTG_MAC AND CMAKE_GENERATOR STREQUAL Xcode))
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -53,7 +66,7 @@ else ()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
 endif()
 
-if(MAC)
+if(SMTG_MAC)
     if(NOT DEFINED ENV{XCODE_VERSION})
         execute_process(COMMAND xcodebuild -version OUTPUT_VARIABLE XCODE_VERSION ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(REGEX MATCH "Xcode [0-9\\.]+" XCODE_VERSION "${XCODE_VERSION}")
@@ -87,7 +100,7 @@ add_compile_options($<$<CONFIG:Debug>:-DDEVELOPMENT=1>)
 add_compile_options($<$<CONFIG:Release>:-DRELEASE=1>)
 add_compile_options($<$<CONFIG:RelWithDebInfo>:-DRELEASE=1>)
 
-if(WIN)
+if(SMTG_WIN)
     add_compile_options(/MP)                            # Multi-processor Compilation
     if(NOT ${CMAKE_GENERATOR} MATCHES "ARM")
         add_compile_options($<$<CONFIG:Debug>:/ZI>)     # Program Database for Edit And Continue

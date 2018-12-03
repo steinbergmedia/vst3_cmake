@@ -6,7 +6,7 @@ include(AddSMTGLibrary)
 # This name will be used as a folder name inside the plug-in package.
 # The variable WIN_ARCHITECTURE_NAME will be set.
 function(smtg_set_aax_win_architecture_name)
-    if(WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(WIN_ARCHITECTURE_NAME "x64")
     else()
         set(WIN_ARCHITECTURE_NAME "win32")
