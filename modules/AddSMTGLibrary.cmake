@@ -76,6 +76,7 @@ function (smtg_create_link_to_plugin target)
     else()
         add_custom_command(
             TARGET ${target} POST_BUILD
+	    COMMAND mkdir -p "${TARGET_DESTINATION}"
             COMMAND ln -sfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
         )
     endif()
