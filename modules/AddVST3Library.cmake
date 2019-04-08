@@ -28,31 +28,6 @@ function(smtg_run_vst_validator target)
     endif()
 endfunction()
 
-# Returns the windows architecture.
-#
-# This name will be used as a folder name inside the plug-in package.
-# The variable WIN_ARCHITECTURE_NAME will be set.
-function(smtg_set_vst_win_architecture_name)
-    if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-        if(${CMAKE_GENERATOR} MATCHES "ARM")
-            set(WIN_ARCHITECTURE_NAME "arm_64-win")
-        else()
-            set(WIN_ARCHITECTURE_NAME "x86_64-win")
-        endif()
-    else()
-        if(${CMAKE_GENERATOR} MATCHES "ARM")
-            set(WIN_ARCHITECTURE_NAME "arm-win")
-        else()
-            set(WIN_ARCHITECTURE_NAME "x86-win")
-        endif()
-    endif()
-
-    set_target_properties(${target}
-        PROPERTIES
-            SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
-    )
-endfunction()
-
 # Adds a vst3 target.
 #
 # @param target The target to which a vst3 plug-in will be added. 
@@ -71,14 +46,14 @@ function(smtg_add_vst3plugin target)
         smtg_run_vst_validator(${target})
     endif()
 
-    if(SMTG_CREATE_VST3_LINK)
+    if(SMTG_CREATE_PLUGIN_LINK)
         smtg_create_link_to_plugin(${target})
     endif()
 
     if(SMTG_MAC AND XCODE AND SMTG_IOS_DEVELOPMENT_TEAM)
         set_target_properties(${target} PROPERTIES
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Mac Developer"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_MAC}"
         )
     endif()
 endfunction()
@@ -101,7 +76,7 @@ function(smtg_add_ios_vst3plugin sign_identity target)
         smtg_set_platform_ios(${target})
         set_target_properties(${target} PROPERTIES 
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_IOS}"
             XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
         )
 

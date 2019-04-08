@@ -1,8 +1,6 @@
 
 include(SetupVST3LibraryDefaultPath)
-
-# use by default SMTG_ as prefix for ASSERT,...
-option(SMTG_RENAME_ASSERT "Rename ASSERT to SMTG_ASSERT" ON)
+include(AddCommonOptions)
 
 # Add VSTGUI
 option(SMTG_ADD_VSTGUI "Add VSTGUI Support" ON)
@@ -14,21 +12,6 @@ option(SMTG_CREATE_VST2_AGAIN_SAMPLE_VERSION "Legacy: Create the VST2 version of
 
 # Add VST3 Hosting Samples
 option(SMTG_ADD_VST3_HOSTING_SAMPLES "Add VST3 Hosting Samples to the solution" ON)
-
-# Create Symbolic Link for the VST3 Plug-ins
-if(SMTG_WIN)
-    set(DEF_OPT_LINK OFF) # be sure to start visual with admin right when enabling this
-else()
-    set(DEF_OPT_LINK ON)
-endif()
-option(SMTG_CREATE_VST3_LINK "Create symbolic link for each VST3 plug-in in ${VST3_FOLDER_NAME} Folder (you need to have the Administrator right on Windows!)" ${DEF_OPT_LINK})
-
-# Create Bundle on Windows for the VST3 Plug-ins
-if(SMTG_WIN)
-    option(SMTG_CREATE_BUNDLE_FOR_WINDOWS "Create Bundle on Windows for the VST3 Plug-ins (New since 3.6.10!)" ON)
-endif()
-
-option(SMTG_ENABLE_TARGET_VARS_LOG "Enable Target variables Logging" OFF)
 
 # Run the Validator after each new compilation of VST3 plug-ins
 option(SMTG_RUN_VST_VALIDATOR "Run VST validator on VST3 plug-ins" ON)
@@ -43,14 +26,14 @@ endif()
 
 # here you can define the VST3 plug-ins folder (it will be created)
 smtg_get_default_vst3_path(DEFAULT_VST3_FOLDER)
-set(SMTG_VST3_TARGET_PATH "${DEFAULT_VST3_FOLDER}" CACHE PATH "Here you can redefine the VST3 plug-ins folder")
-if(${SMTG_VST3_TARGET_PATH})
-  file(MAKE_DIRECTORY ${SMTG_VST3_TARGET_PATH})
-  if(EXISTS ${SMTG_VST3_TARGET_PATH})
-      message(STATUS "SMTG_VST3_TARGET_PATH is set to : " ${SMTG_VST3_TARGET_PATH})
-  else()
-      message(STATUS "SMTG_VST3_TARGET_PATH is not set!")
-  endif()
+set(SMTG_PLUGIN_TARGET_PATH "${DEFAULT_VST3_FOLDER}" CACHE PATH "Here you can redefine the VST3 plug-ins folder")
+if(${SMTG_PLUGIN_TARGET_PATH})
+    file(MAKE_DIRECTORY ${SMTG_PLUGIN_TARGET_PATH})
+    if(EXISTS ${SMTG_PLUGIN_TARGET_PATH})
+        message(STATUS "SMTG_PLUGIN_TARGET_PATH is set to : " ${SMTG_PLUGIN_TARGET_PATH})
+    else()
+        message(STATUS "SMTG_PLUGIN_TARGET_PATH is not set!")
+    endif()
 endif()
 
 # Here you can add Your own VST3 plug-ins folder (by default we add the HelloWorld included in my_plugins folder)
@@ -72,4 +55,9 @@ if(SMTG_WIN)
         set(SMTG_PACKAGE_ICON_PATH "" CACHE FILEPATH ${MSG_ICON_PATH})
         message(STATUS "SMTG_PACKAGE_ICON_PATH is not set to (as expected) : " ${DEFAULT_ICON_PATH})
     endif()
+endif()
+
+if(SMTG_MAC)
+    set(SMTG_CODE_SIGN_IDENTITY_MAC "Mac Developer" CACHE STRING "macOS Code Sign Identity")
+    set(SMTG_CODE_SIGN_IDENTITY_IOS "iPhone Developer" CACHE STRING "iOS Code Sign Identity")
 endif()

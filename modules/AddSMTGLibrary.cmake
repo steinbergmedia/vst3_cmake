@@ -1,8 +1,31 @@
 
-# TODO: Rename SMTG_VST3_TARGET_PATH
-
 include(CMakePrintHelpers)
 include(UniversalBinary)
+
+# Returns the windows architecture.
+#
+# This name will be used as a folder name inside the plug-in package.
+# The variable WIN_ARCHITECTURE_NAME will be set.
+function(smtg_set_vst_win_architecture_name)
+    if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+        if(${CMAKE_GENERATOR} MATCHES "ARM")
+            set(WIN_ARCHITECTURE_NAME "arm_64-win")
+        else()
+            set(WIN_ARCHITECTURE_NAME "x86_64-win")
+        endif()
+    else()
+        if(${CMAKE_GENERATOR} MATCHES "ARM")
+            set(WIN_ARCHITECTURE_NAME "arm-win")
+        else()
+            set(WIN_ARCHITECTURE_NAME "x86-win")
+        endif()
+    endif()
+
+    set_target_properties(${target}
+        PROPERTIES
+            SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}
+    )
+endfunction()
 
 # Prints out all relevant properties of a target for debugging.
 #
@@ -51,8 +74,8 @@ endfunction()
 #
 # @param target The target whose output is the symlink's source.
 function (smtg_create_link_to_plugin target)
-    if(${SMTG_VST3_TARGET_PATH} STREQUAL "")
-        message(FATAL_ERROR "Define a proper value for SMTG_VST3_TARGET_PATH")
+    if(${SMTG_PLUGIN_TARGET_PATH} STREQUAL "")
+        message(FATAL_ERROR "Define a proper value for SMTG_PLUGIN_TARGET_PATH")
     endif()
 
     get_target_property(TARGET_SOURCE       ${target} SMTG_PLUGIN_PACKAGE_PATH)
@@ -76,11 +99,17 @@ function (smtg_create_link_to_plugin target)
     else()
         add_custom_command(
             TARGET ${target} POST_BUILD
-            COMMAND ln -sfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
+            COMMAND mkdir -p "${TARGET_DESTINATION}"
+            COMMAND ln -svfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
         )
     endif()
 endfunction()
 
+set(SMTG_DESKTOP_INI_PATH ${CMAKE_CURRENT_LIST_DIR}/../templates/desktop.ini.in)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+  set(SMTG_DESKTOP_INI_PATH ${SMTG_DESKTOP_INI_PATH} PARENT_SCOPE)
+endif()
 # Customizes folder icon on windows
 #
 # Customizes folder icon on windows by copying desktop.ini and PlugIn.ico into the package.
@@ -95,7 +124,7 @@ function(smtg_add_folder_icon target icon)
             ${icon}
             ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
         COMMAND ${CMAKE_COMMAND} -E copy
-            ${PROJECT_SOURCE_DIR}/cmake/templates/desktop.ini.in
+            ${SMTG_DESKTOP_INI_PATH}
             ${PLUGIN_PACKAGE_PATH}/desktop.ini
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}/desktop.ini
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
@@ -137,7 +166,7 @@ endfunction()
 function(smtg_get_linux_architecture_name)
     EXECUTE_PROCESS(
         COMMAND uname -m 
-        COMMAND tr -d '\n' 
+        COMMAND tr -d '\n'
         OUTPUT_VARIABLE ARCHITECTURE
     )
 
@@ -149,6 +178,19 @@ endfunction()
 # @param target The target whose output will be put into a package.
 # @param extension The package's extension
 function(smtg_make_plugin_package target extension)
+    set(pkg_extension ${extension})
+    if (${extension} STREQUAL "ski")
+        if(SMTG_WIN)
+            set(extension dll)
+            if (SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+                set(pkg_extension bundle)
+            else()
+                set(pkg_extension ${extension})
+            endif()
+        elseif(SMTG_MAC)
+            set(extension bundle)
+        endif ()
+    endif ()
     string(TOUPPER ${extension} PLUGIN_EXTENSION_UPPER)
 
     if(SMTG_CUSTOM_BINARY_LOCATION)
@@ -157,16 +199,15 @@ function(smtg_make_plugin_package target extension)
         set(SMTG_PLUGIN_BINARY_LOCATION ${CMAKE_BINARY_DIR})
     endif()
 
-
     set_target_properties(${target} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY        ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
         SMTG_PLUGIN_BINARY_DIR          ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
         SMTG_PLUGIN_EXTENSION           ${extension}
-        SMTG_PLUGIN_PACKAGE_NAME        ${target}.${extension}
+        SMTG_PLUGIN_PACKAGE_NAME        ${target}.${pkg_extension}
         SMTG_PLUGIN_PACKAGE_CONTENTS    Contents
         SMTG_PLUGIN_PACKAGE_RESOURCES   Contents/Resources
         SMTG_PLUGIN_PACKAGE_SNAPSHOTS   Snapshots
-        SMTG_PLUGIN_USER_DEFINED_TARGET ${SMTG_VST3_TARGET_PATH}/${PLUGIN_PACKAGE_NAME}
+        SMTG_PLUGIN_USER_DEFINED_TARGET ${SMTG_PLUGIN_TARGET_PATH}/${PLUGIN_PACKAGE_NAME}
     )
 
     get_target_property(PLUGIN_BINARY_DIR   ${target} SMTG_PLUGIN_BINARY_DIR)
@@ -210,15 +251,13 @@ function(smtg_make_plugin_package target extension)
         )
         
         # In order not to have the PDB inside the plug-in package in release builds, we specify a different location.
-     
         if (CMAKE_SIZEOF_VOID_P EQUAL 4)
             set(WIN_PDB WIN_PDB32)
         else()
             set(WIN_PDB WIN_PDB64)
         endif()
         set_target_properties(${target} PROPERTIES
-            PDB_OUTPUT_DIRECTORY
-                ${PROJECT_BINARY_DIR}/${WIN_PDB}
+            PDB_OUTPUT_DIRECTORY        ${PROJECT_BINARY_DIR}/${WIN_PDB}
         )
 
         # Create Bundle on Windows
