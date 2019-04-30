@@ -45,9 +45,9 @@ find_library(LIBJACK_libjackserver_LIBRARY
         "C:/Program Files/Jack/lib"
 )
 
-set(LIBJACK_LIBRARIES ${LIBJACK_libjack_LIBRARY} ${LIBJACK_libjackserver_LIBRARY} )
+set(LIBJACK_LIBRARIES ${LIBJACK_libjack_LIBRARY})
 set(LIBJACK_LIBRARY ${LIBJACK_LIBRARIES})
-set(LIBJACK_INCLUDE_DIRS ${LIBJACK_INCLUDE_DIR} )
+set(LIBJACK_INCLUDE_DIRS ${LIBJACK_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LIBJACK_FOUND to TRUE
@@ -57,6 +57,8 @@ find_package_handle_standard_args(LIBJACK  DEFAULT_MSG
 
 if(LIBJACK_FOUND)
     message(STATUS "LIBJACK_FOUND at: " ${LIBJACK_INCLUDE_DIR})
+elseif(SMTG_LINUX)
+    message(STATUS "LIBJACK_FOUND is not set. If you need it, install it (for example with: apt-get install libjack-jackd2-dev) or check Jack Audio from http://www.jackaudio.org!")
 else()
     message(STATUS "LIBJACK_FOUND is not set. If you need it, please install Jack Audio from http://www.jackaudio.org!")
 endif()
