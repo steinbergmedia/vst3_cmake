@@ -3,7 +3,7 @@
 function(smtg_get_default_vst3_path)
     if(SMTG_WIN)
         string(FIND ${CMAKE_GENERATOR} Win64 win64Found)
-        if(${win64Found} EQUAL -1)
+        if((NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "x64") AND (${win64Found} EQUAL -1))
             if(EXISTS "$ENV{PROGRAMFILES} (x86)")
                 set(DEFAULT_VST3_FOLDER "$ENV{PROGRAMFILES} (x86)\\Common Files\\VST3" PARENT_SCOPE)
             else()
