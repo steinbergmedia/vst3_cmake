@@ -62,9 +62,9 @@ endfunction()
 function (smtg_strip_symbols_with_dbg target)
     add_custom_command(TARGET ${target} POST_BUILD
         # Create a target.so.dbg file with debug information
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
-        COMMAND ${CMAKE_COMMAND_STRIP} strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
+        COMMAND ${CMAKE_STRIP} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
     )
 endfunction()
 
