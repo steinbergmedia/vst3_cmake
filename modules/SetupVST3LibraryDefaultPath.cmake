@@ -2,7 +2,22 @@
 # VST3 Folder (following the specification)
 function(smtg_get_default_vst3_path)
     if(SMTG_WIN)
-        string(FIND ${CMAKE_GENERATOR} Win64 win64Found)
+        set(win64Found "1")
+        if(NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+            string(FIND ${CMAKE_GENERATOR_PLATFORM} x64 win64Found)
+        elseif (${CMAKE_GENERATOR} STREQUAL "Visual Studio 15 2017" OR 
+                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 14 2015" OR 
+                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 12 2013" OR 
+                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 11 2012" OR 
+                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 10 2010" OR 
+                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 9 2008")
+                    set(win64Found "-1")
+        else()
+            string(FIND ${CMAKE_GENERATOR} Win32 win32Found)
+            if(NOT ${win32Found} EQUAL -1)
+                set(win64Found "-1")
+            endif()
+        endif()
         if(${win64Found} EQUAL -1)
             if(EXISTS "$ENV{PROGRAMFILES} (x86)")
                 set(DEFAULT_VST3_FOLDER "$ENV{PROGRAMFILES} (x86)\\Common Files\\VST3" PARENT_SCOPE)
@@ -14,7 +29,7 @@ function(smtg_get_default_vst3_path)
         endif()
     elseif(SMTG_MAC)
         set(DEFAULT_VST3_FOLDER "$ENV{HOME}/Library/Audio/Plug-ins/VST3" PARENT_SCOPE)
-    elseif(SMTG_LINUX)  	
+    elseif(SMTG_LINUX)
         set(DEFAULT_VST3_FOLDER "$ENV{HOME}/.vst3" PARENT_SCOPE)
     endif()
 endfunction()

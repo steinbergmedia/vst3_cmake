@@ -14,11 +14,11 @@ function(smtg_set_aax_win_architecture_name)
 
     set_target_properties(${target}
         PROPERTIES
-            SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
+        SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
     )
 endfunction()
 
-# Adds a aax target.
+# Adds a AAX target.
 #
 # @param target The target to which a aax plug-in will be added. 
 function(smtg_add_aaxplugin target)
@@ -26,6 +26,4 @@ function(smtg_add_aaxplugin target)
     smtg_set_aax_win_architecture_name(${target})
     smtg_make_plugin_package(${target} aaxplugin)
     # smtg_dump_plugin_package_variables(${target})
-
-    target_compile_definitions(${target} PUBLIC $<$<CONFIG:Debug>:VSTGUI_LIVE_EDITING=1>)
 endfunction()

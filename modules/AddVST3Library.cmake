@@ -40,8 +40,6 @@ function(smtg_add_vst3plugin target)
         smtg_dump_plugin_package_variables(${target})
     endif()
 
-    target_compile_definitions(${target} PUBLIC $<$<CONFIG:Debug>:VSTGUI_LIVE_EDITING=1>)
-    
     if(SMTG_RUN_VST_VALIDATOR)
         smtg_run_vst_validator(${target})
     endif()
@@ -71,8 +69,6 @@ function(smtg_add_ios_vst3plugin sign_identity target)
             smtg_dump_plugin_package_variables(${target})
         endif()
 
-        target_compile_definitions(${target} PUBLIC $<$<CONFIG:Debug>:VSTGUI_LIVE_EDITING=1>)
-    
         smtg_set_platform_ios(${target})
         set_target_properties(${target} PROPERTIES 
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}

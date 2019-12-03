@@ -52,7 +52,7 @@ endfunction()
 # @param target The target whose build symbols will be stripped
 function (smtg_strip_symbols target)
     add_custom_command(TARGET ${target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND_STRIP} strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_COMMAND_STRIP} $ENV{CROSS_COMPILE}strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
     )
 endfunction()
 
@@ -62,9 +62,9 @@ endfunction()
 function (smtg_strip_symbols_with_dbg target)
     add_custom_command(TARGET ${target} POST_BUILD
         # Create a target.so.dbg file with debug information
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
-        COMMAND ${CMAKE_COMMAND_STRIP} strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
+        COMMAND ${CMAKE_COMMAND_STRIP} $ENV{CROSS_COMPILE}strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
     )
 endfunction()
 
@@ -108,7 +108,7 @@ endfunction()
 set(SMTG_DESKTOP_INI_PATH ${CMAKE_CURRENT_LIST_DIR}/../templates/desktop.ini.in)
 get_directory_property(hasParent PARENT_DIRECTORY)
 if(hasParent)
-  set(SMTG_DESKTOP_INI_PATH ${SMTG_DESKTOP_INI_PATH} PARENT_SCOPE)
+    set(SMTG_DESKTOP_INI_PATH ${SMTG_DESKTOP_INI_PATH} PARENT_SCOPE)
 endif()
 # Customizes folder icon on windows
 #
@@ -164,13 +164,26 @@ endfunction()
 # This name will be used as a folder name inside the plug-in package.
 # The variable LINUX_ARCHITECTURE_NAME will be set.
 function(smtg_get_linux_architecture_name)
-    EXECUTE_PROCESS(
-        COMMAND uname -m 
-        COMMAND tr -d '\n'
-        OUTPUT_VARIABLE ARCHITECTURE
-    )
-
-    set(LINUX_ARCHITECTURE_NAME ${ARCHITECTURE}-linux PARENT_SCOPE)
+    if(ANDROID)
+        set(ARCHITECTURE ${CMAKE_ANDROID_ARCH_ABI})
+        set(LINUX_ARCHITECTURE_NAME ${ARCHITECTURE}-android PARENT_SCOPE)
+    else()
+        # Check if we are cross-compiling for a different architecture
+        if(NOT $ENV{CROSS_COMPILE} STREQUAL "")
+            string(REGEX MATCH "^[A-Z|a-z|0-9|_]*-" CROSS_COMPILE_PREFIX $ENV{CROSS_COMPILE})
+            # Strip trailing - from regex result
+            string(LENGTH ${CROSS_COMPILE_PREFIX} CROSS_COMPILE_PREFIX_LEN)
+            math(EXPR CROSS_COMPILE_PREFIX_LEN "${CROSS_COMPILE_PREFIX_LEN} -1")
+            string(SUBSTRING ${CROSS_COMPILE_PREFIX} 0 ${CROSS_COMPILE_PREFIX_LEN} ARCHITECTURE)
+        else()
+            EXECUTE_PROCESS(
+                COMMAND uname -m
+                COMMAND tr -d '\n'
+                OUTPUT_VARIABLE ARCHITECTURE
+            )
+        endif()
+        set(LINUX_ARCHITECTURE_NAME ${ARCHITECTURE}-linux PARENT_SCOPE)
+    endif()
 endfunction()
 
 # Prepare the target to build a plug-in package.
@@ -179,18 +192,18 @@ endfunction()
 # @param extension The package's extension
 function(smtg_make_plugin_package target extension)
     set(pkg_extension ${extension})
-    if (${extension} STREQUAL "ski")
+    if(${extension} STREQUAL "ski")
         if(SMTG_WIN)
             set(extension dll)
-            if (SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+            if(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
                 set(pkg_extension bundle)
             else()
                 set(pkg_extension ${extension})
             endif()
         elseif(SMTG_MAC)
             set(extension bundle)
-        endif ()
-    endif ()
+        endif()
+    endif()
     string(TOUPPER ${extension} PLUGIN_EXTENSION_UPPER)
 
     if(SMTG_CUSTOM_BINARY_LOCATION)
@@ -251,7 +264,7 @@ function(smtg_make_plugin_package target extension)
         )
         
         # In order not to have the PDB inside the plug-in package in release builds, we specify a different location.
-        if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        if(CMAKE_SIZEOF_VOID_P EQUAL 4)
             set(WIN_PDB WIN_PDB32)
         else()
             set(WIN_PDB WIN_PDB64)
@@ -261,7 +274,7 @@ function(smtg_make_plugin_package target extension)
         )
 
         # Create Bundle on Windows
-        if (SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+        if(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
             get_target_property(WIN_ARCHITECTURE_NAME ${target} SMTG_WIN_ARCHITECTURE_NAME)
 
             # When using LIBRARY_OUTPUT_DIRECTORY, cmake adds another /Debug resp. /Release folder at the end of the path.
@@ -327,7 +340,7 @@ endfunction()
 # @param input_file resource file
 # @param ARGV2 destination subfolder
 function(smtg_add_plugin_resource target input_file)
-    if (SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
+    if(SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
         get_target_property(PLUGIN_PACKAGE_RESOURCES ${target} SMTG_PLUGIN_PACKAGE_RESOURCES)
         set(destination_folder "${PLUGIN_PACKAGE_PATH}/${PLUGIN_PACKAGE_RESOURCES}")
@@ -335,10 +348,10 @@ function(smtg_add_plugin_resource target input_file)
             set(destination_folder "${destination_folder}/${ARGV2}")
         endif()
         if(NOT EXISTS ${destination_folder})
-          add_custom_command(TARGET ${target} PRE_LINK
+            add_custom_command(TARGET ${target} PRE_LINK
               COMMAND ${CMAKE_COMMAND} -E make_directory
               "${destination_folder}"
-          )
+            )
         endif()
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -354,7 +367,7 @@ function(smtg_add_plugin_resource target input_file)
 
         set_source_files_properties(${input_file} 
             PROPERTIES 
-                MACOSX_PACKAGE_LOCATION "${destination_folder}"
+            MACOSX_PACKAGE_LOCATION "${destination_folder}"
         )
     endif()
 endfunction()
