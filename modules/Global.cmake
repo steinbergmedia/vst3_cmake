@@ -11,27 +11,8 @@ endif()
 #-------------------------------------------------------------------------------
 # Platform Detection
 #-------------------------------------------------------------------------------
-get_directory_property(hasParent PARENT_DIRECTORY)
-
-if(APPLE)
-    if(hasParent)
-        set(SMTG_MAC TRUE PARENT_SCOPE)
-    else()
-        set(SMTG_MAC TRUE)
-    endif()
-elseif(UNIX OR ANDROID_PLATFORM)
-    if(hasParent)
-        set(SMTG_LINUX TRUE PARENT_SCOPE)
-    else()
-        set(SMTG_LINUX TRUE)
-    endif()
-elseif(WIN32)
-    if(hasParent)
-        set(SMTG_WIN TRUE PARENT_SCOPE)
-    else()
-        set(SMTG_WIN TRUE)
-    endif()
-endif()
+include (SMTG_DetectPlatform)
+smtg_detect_platform()
 
 #-------------------------------------------------------------------------------
 # Global Settings

@@ -4,9 +4,9 @@ include(UniversalBinary)
 
 # Returns the windows architecture.
 #
-# This name will be used as a folder name inside the plug-in package.
+# This name will be used as a folder name inside the Plug-in package.
 # The variable WIN_ARCHITECTURE_NAME will be set.
-function(smtg_set_vst_win_architecture_name)
+function(smtg_set_vst_win_architecture_name target)
     if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         if(${CMAKE_GENERATOR} MATCHES "ARM")
             set(WIN_ARCHITECTURE_NAME "arm_64-win")
@@ -52,7 +52,7 @@ endfunction()
 # @param target The target whose build symbols will be stripped
 function (smtg_strip_symbols target)
     add_custom_command(TARGET ${target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND_STRIP} $ENV{CROSS_COMPILE}strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_STRIP} $ENV{CROSS_COMPILE} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
     )
 endfunction()
 
@@ -62,15 +62,15 @@ endfunction()
 function (smtg_strip_symbols_with_dbg target)
     add_custom_command(TARGET ${target} POST_BUILD
         # Create a target.so.dbg file with debug information
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
-        COMMAND ${CMAKE_COMMAND_STRIP} $ENV{CROSS_COMPILE}strip --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
-        COMMAND ${CMAKE_COMMAND_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
+        COMMAND ${CMAKE_STRIP} $ENV{CROSS_COMPILE} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
+        COMMAND ${CMAKE_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
     )
 endfunction()
 
-# Creates a symlink to the targets output resp plug-in.
+# Creates a symlink to the targets output resp Plug-in.
 #
-# A symlink to the output plug-in will be created as a post build step.
+# A symlink to the output Plug-in will be created as a post build step.
 #
 # @param target The target whose output is the symlink's source.
 function (smtg_create_link_to_plugin target)
@@ -132,7 +132,7 @@ function(smtg_add_folder_icon target icon)
     )
 endfunction()
 
-# Adds the plug-in's main entry point.
+# Adds the Plug-in's main entry point.
 #
 # The variable public_sdk_SOURCE_DIR needs to be specified.
 #
@@ -161,7 +161,7 @@ endfunction()
 
 # Returns the linux architecture name.
 #
-# This name will be used as a folder name inside the plug-in package.
+# This name will be used as a folder name inside the Plug-in package.
 # The variable LINUX_ARCHITECTURE_NAME will be set.
 function(smtg_get_linux_architecture_name)
     if(ANDROID)
@@ -186,11 +186,14 @@ function(smtg_get_linux_architecture_name)
     endif()
 endfunction()
 
-# Prepare the target to build a plug-in package.
+# Prepare the target to build a Plug-in package.
 #
 # @param target The target whose output will be put into a package.
 # @param extension The package's extension
-function(smtg_make_plugin_package target extension)
+function(smtg_make_plugin_package target pkg_name extension)
+    if(${pkg_name} STREQUAL "")
+        set(pkg_name ${target})
+    endif()
     set(pkg_extension ${extension})
     if(${extension} STREQUAL "ski")
         if(SMTG_WIN)
@@ -200,7 +203,7 @@ function(smtg_make_plugin_package target extension)
             else()
                 set(pkg_extension ${extension})
             endif()
-        elseif(SMTG_MAC)
+        else()
             set(extension bundle)
         endif()
     endif()
@@ -216,7 +219,7 @@ function(smtg_make_plugin_package target extension)
         LIBRARY_OUTPUT_DIRECTORY        ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
         SMTG_PLUGIN_BINARY_DIR          ${SMTG_PLUGIN_BINARY_LOCATION}/${PLUGIN_EXTENSION_UPPER}
         SMTG_PLUGIN_EXTENSION           ${extension}
-        SMTG_PLUGIN_PACKAGE_NAME        ${target}.${pkg_extension}
+        SMTG_PLUGIN_PACKAGE_NAME        ${pkg_name}.${pkg_extension}
         SMTG_PLUGIN_PACKAGE_CONTENTS    Contents
         SMTG_PLUGIN_PACKAGE_RESOURCES   Contents/Resources
         SMTG_PLUGIN_PACKAGE_SNAPSHOTS   Snapshots
@@ -239,6 +242,8 @@ function(smtg_make_plugin_package target extension)
                 XCODE_ATTRIBUTE_WRAPPER_EXTENSION       ${PLUGIN_EXTENSION}
                 SMTG_PLUGIN_PACKAGE_PATH      
                     ${PLUGIN_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${PLUGIN_PACKAGE_NAME}
+                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES
+                XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT $<$<CONFIG:Debug>:dwarf>$<$<CONFIG:Release>:dwarf-with-dsym>
             )
         else()
             set_target_properties(${target} PROPERTIES 
@@ -263,7 +268,7 @@ function(smtg_make_plugin_package target extension)
             SMTG_PLUGIN_PACKAGE_PATH    ${PLUGIN_PACKAGE_PATH}
         )
         
-        # In order not to have the PDB inside the plug-in package in release builds, we specify a different location.
+        # In order not to have the PDB inside the Plug-in package in release builds, we specify a different location.
         if(CMAKE_SIZEOF_VOID_P EQUAL 4)
             set(WIN_PDB WIN_PDB32)
         else()

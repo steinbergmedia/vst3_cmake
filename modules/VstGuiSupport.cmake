@@ -11,9 +11,9 @@ macro(setupVstGuiSupport)
     else()
         set(VSTGUI_STANDALONE ON)
     endif()
-    
-    add_subdirectory(vstgui4/vstgui)
 
+    add_subdirectory(${VSTGUI_ROOT}/vstgui4/vstgui ${CMAKE_CURRENT_BINARY_DIR}/VSTGUI.build)
+ 
     set(VST3_VSTGUI_SOURCES
         ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.cpp
         ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.h
@@ -56,4 +56,11 @@ macro(setupVstGuiSupport)
         )
     endif()
     message(STATUS "VSTGUI_ROOT is set to : " ${VSTGUI_ROOT})
+    
+    set_target_properties(vstgui PROPERTIES FOLDER "VSTGUI")
+    set_target_properties(vstgui_support PROPERTIES FOLDER "VSTGUI")
+    set_target_properties(vstgui_uidescription PROPERTIES FOLDER "VSTGUI")
+    if(VSTGUI_STANDALONE)
+        set_target_properties(vstgui_standalone PROPERTIES FOLDER "VSTGUI")
+    endif()
 endmacro()

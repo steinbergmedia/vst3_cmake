@@ -25,15 +25,18 @@ macro(setupPlatformToolset)
         if(XCODE)
             set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
             set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+            add_compile_options(-Winconsistent-missing-override)    # Suggest override when missing 
         elseif(SMTG_MAC)
             set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
             set(CMAKE_CXX_STANDARD 14)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+            add_compile_options(-Wsuggest-override)     # Suggest override when missing 
             link_libraries(c++)
         else()
             set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
             set(CMAKE_CXX_STANDARD 14)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-multichar")
+            add_compile_options(-Wsuggest-override)     # Suggest override when missing 
             if(ANDROID)
                 set(CMAKE_ANDROID_STL_TYPE c++_static)
                 link_libraries(dl)
