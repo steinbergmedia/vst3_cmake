@@ -1,5 +1,8 @@
 
-include(AddSMTGLibrary)
+#-------------------------------------------------------------------------------
+# Includes
+#-------------------------------------------------------------------------------
+include(SMTG_AddSMTGLibrary)
 
 # Returns the windows architecture.
 #

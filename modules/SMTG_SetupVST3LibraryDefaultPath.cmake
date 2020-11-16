@@ -5,12 +5,12 @@ function(smtg_get_default_vst3_path)
         set(win64Found "1")
         if(NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
             string(FIND ${CMAKE_GENERATOR_PLATFORM} x64 win64Found)
-        elseif (${CMAKE_GENERATOR} STREQUAL "Visual Studio 15 2017" OR 
-                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 14 2015" OR 
-                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 12 2013" OR 
-                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 11 2012" OR 
-                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 10 2010" OR 
-                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 9 2008")
+        elseif(${CMAKE_GENERATOR} STREQUAL "Visual Studio 15 2017" OR 
+               ${CMAKE_GENERATOR} STREQUAL "Visual Studio 14 2015" OR 
+               ${CMAKE_GENERATOR} STREQUAL "Visual Studio 12 2013" OR 
+               ${CMAKE_GENERATOR} STREQUAL "Visual Studio 11 2012" OR 
+               ${CMAKE_GENERATOR} STREQUAL "Visual Studio 10 2010" OR 
+               ${CMAKE_GENERATOR} STREQUAL "Visual Studio 9 2008")
                     set(win64Found "-1")
         else()
             string(FIND ${CMAKE_GENERATOR} Win32 win32Found)
@@ -28,8 +28,10 @@ function(smtg_get_default_vst3_path)
             set(DEFAULT_VST3_FOLDER "$ENV{CommonProgramW6432}\\VST3" PARENT_SCOPE)
         endif()
     elseif(SMTG_MAC)
-        set(DEFAULT_VST3_FOLDER "$ENV{HOME}/Library/Audio/Plug-ins/VST3" PARENT_SCOPE)
+        set(DEFAULT_VST3_FOLDER "$ENV{HOME}/Library/Audio/Plug-Ins/VST3" PARENT_SCOPE)
     elseif(SMTG_LINUX)
         set(DEFAULT_VST3_FOLDER "$ENV{HOME}/.vst3" PARENT_SCOPE)
+    else()
+      message(FATAL_ERROR "unknown platform")
     endif()
 endfunction()

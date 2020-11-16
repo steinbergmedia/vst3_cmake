@@ -1,6 +1,11 @@
 
+#-------------------------------------------------------------------------------
+# Includes
+#-------------------------------------------------------------------------------
+include(SMTG_CodeSign)
+
 if(SMTG_MAC AND SMTG_ADD_VSTGUI)
-    if(XCODE AND SMTG_IOS_DEVELOPMENT_TEAM)
+    if(XCODE)
         set(SMTG_AUV3_FOLDER FOLDER "AudioUnit V3")
 
         set(auv3wrappermacos_sources
@@ -145,14 +150,9 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/"
                         "$<TARGET_BUNDLE_CONTENT_DIR:${app-target}>/PlugIns/auv3.appex/"
                 )
-
-                set_target_properties(${app-target} PROPERTIES
-                    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-                    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_MAC}"
-                )
+                smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
+                smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
                 set_target_properties(${app-extension-target} PROPERTIES
-                    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-                    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_MAC}"
                     XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
                 )
             else()
@@ -181,14 +181,13 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
 
                 smtg_set_platform_ios(${app-target})
                 smtg_set_platform_ios(${app-extension-target})
+                smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
+                smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
+
                 set_target_properties(${app-target} PROPERTIES 
-                    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_IOS}"
-                    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
                     XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
                 )
                 set_target_properties(${app-extension-target} PROPERTIES 
-                    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_IOS}"
-                    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
                     XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
                     XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
                 )

@@ -1,5 +1,19 @@
 
-include(AddSMTGLibrary)
+#-------------------------------------------------------------------------------
+# Includes
+#-------------------------------------------------------------------------------
+include(SMTG_AddSMTGLibrary)
+
+set(SMTG_RUN_VST_VALIDATOR_DEFAULT ON)
+if(SMTG_MAC AND (XCODE_VERSION VERSION_GREATER_EQUAL 12))
+    # Xcode runs the cmake custom command before signing. 
+    # Running the validator before the plug-in is signed will fail on newer macOS versions
+    # Thus running the validator per default is disabled for now
+    set(SMTG_RUN_VST_VALIDATOR_DEFAULT OFF)
+endif()
+
+# Run the Validator after each new compilation of VST3 Plug-ins
+option(SMTG_RUN_VST_VALIDATOR "Run VST validator on VST3 Plug-ins" ${SMTG_RUN_VST_VALIDATOR_DEFAULT})
 
 # Runs the validator on a VST3 target.
 #
@@ -8,6 +22,7 @@ include(AddSMTGLibrary)
 # @param target The target which the validator will validate. 
 function(smtg_run_vst_validator target)
     if(TARGET validator)
+        message(STATUS "Setup running validator for ${target}")
         add_dependencies(${target} validator)
         if(SMTG_WIN)
             set(TARGET_PATH $<TARGET_FILE:${target}>)
@@ -37,7 +52,12 @@ endfunction()
 function(smtg_add_vst3plugin_with_pkgname target pkg_name)
    #message(STATUS "target is ${target}")
    #message(STATUS "pkg_name is ${pkg_name}")
-    
+
+    if(NOT EXISTS ${SMTG_PACKAGE_ICON_PATH})
+        set(SMTG_PACKAGE_ICON_PATH ${SDK_ROOT}/vst3_doc/artwork/VST_Logo_Steinberg.ico)
+    endif()
+   #message(STATUS "SMTG_PACKAGE_ICON_PATH is ${SMTG_PACKAGE_ICON_PATH}")
+
     add_library(${target} MODULE ${ARGN})
     smtg_set_vst_win_architecture_name(${target})
     smtg_make_plugin_package(${target} ${pkg_name} vst3)
@@ -54,12 +74,6 @@ function(smtg_add_vst3plugin_with_pkgname target pkg_name)
         smtg_create_link_to_plugin(${target})
     endif()
 
-    if(SMTG_MAC AND XCODE AND SMTG_IOS_DEVELOPMENT_TEAM)
-        set_target_properties(${target} PROPERTIES
-            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_MAC}"
-        )
-    endif()
 endfunction()
 
 # Adds a VST3 target.

@@ -1,26 +1,19 @@
 
-macro(setupVstGuiSupport)
+macro(smtg_enable_vstgui_support)
     set(VSTGUI_DISABLE_UNITTESTS 1)
     set(VSTGUI_STANDALONE_EXAMPLES OFF)
-    if(SMTG_BUILD_UNIVERSAL_BINARY)
-        set(VSTGUI_STANDALONE OFF)
-        set(VSTGUI_TOOLS OFF)
-    elseif(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 4)
-        set(VSTGUI_STANDALONE OFF)
-        set(VSTGUI_TOOLS OFF)
-    else()
-        set(VSTGUI_STANDALONE ON)
-    endif()
+    set(VSTGUI_STANDALONE OFF)
+    set(VSTGUI_TOOLS OFF)
 
-    add_subdirectory(${VSTGUI_ROOT}/vstgui4/vstgui ${CMAKE_CURRENT_BINARY_DIR}/VSTGUI.build)
+    add_subdirectory(${SMTG_VSTGUI_ROOT}/vstgui4/vstgui ${CMAKE_CURRENT_BINARY_DIR}/VSTGUI.build)
  
     set(VST3_VSTGUI_SOURCES
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.cpp
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.h
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.cpp
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.h
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.cpp
-        ${VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.h
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.cpp
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.h
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.cpp
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.h
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.cpp
+        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.h
         ${SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
         )
     add_library(vstgui_support STATIC ${VST3_VSTGUI_SOURCES})
@@ -30,8 +23,13 @@ macro(setupVstGuiSupport)
     else()
         target_compile_definitions(vstgui_support PUBLIC VSTGUI_ENABLE_DEPRECATED_METHODS=0)
     endif()
-    target_include_directories(vstgui_support PUBLIC ${VSTGUI_ROOT}/vstgui4)
-    target_link_libraries(vstgui_support PRIVATE vstgui_uidescription)
+    target_include_directories(vstgui_support PUBLIC ${SMTG_VSTGUI_ROOT}/vstgui4)
+    target_link_libraries(vstgui_support 
+        PRIVATE
+            vstgui_uidescription
+        PUBLIC
+            base
+    )
     smtg_setup_universal_binary(vstgui_support)
     smtg_setup_universal_binary(vstgui)
     smtg_setup_universal_binary(vstgui_uidescription)
@@ -55,7 +53,7 @@ macro(setupVstGuiSupport)
             ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.h
         )
     endif()
-    message(STATUS "VSTGUI_ROOT is set to : " ${VSTGUI_ROOT})
+    message(STATUS "SMTG_VSTGUI_ROOT is set to : " ${SMTG_VSTGUI_ROOT})
     
     set_target_properties(vstgui PROPERTIES FOLDER "VSTGUI")
     set_target_properties(vstgui_support PROPERTIES FOLDER "VSTGUI")

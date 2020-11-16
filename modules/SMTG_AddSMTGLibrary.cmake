@@ -1,30 +1,39 @@
 
+#-------------------------------------------------------------------------------
+# Includes
+#-------------------------------------------------------------------------------
 include(CMakePrintHelpers)
-include(UniversalBinary)
+include(SMTG_UniversalBinary)
+include(SMTG_CodeSign)
 
 # Returns the windows architecture.
 #
 # This name will be used as a folder name inside the Plug-in package.
 # The variable WIN_ARCHITECTURE_NAME will be set.
 function(smtg_set_vst_win_architecture_name target)
-    if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-        if(${CMAKE_GENERATOR} MATCHES "ARM")
-            set(WIN_ARCHITECTURE_NAME "arm_64-win")
-        else()
-            set(WIN_ARCHITECTURE_NAME "x86_64-win")
+    if(SMTG_WIN)
+        if(DEFINED CMAKE_GENERATOR_PLATFORM AND CMAKE_GENERATOR_PLATFORM)
+            string(TOLOWER ${CMAKE_GENERATOR_PLATFORM} GENERATOR_PLATFORM)
         endif()
-    else()
-        if(${CMAKE_GENERATOR} MATCHES "ARM")
-            set(WIN_ARCHITECTURE_NAME "arm-win")
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            if(${GENERATOR_PLATFORM} MATCHES "arm64")
+                set(WIN_ARCHITECTURE_NAME "arm_64-win")
+            else()
+                set(WIN_ARCHITECTURE_NAME "x86_64-win")
+            endif()
         else()
-            set(WIN_ARCHITECTURE_NAME "x86-win")
+            if(${GENERATOR_PLATFORM} MATCHES "arm")
+                set(WIN_ARCHITECTURE_NAME "arm-win")
+            else()
+                set(WIN_ARCHITECTURE_NAME "x86-win")
+            endif()
         endif()
-    endif()
 
-    set_target_properties(${target}
-        PROPERTIES
-            SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}
-    )
+        set_target_properties(${target}
+            PROPERTIES
+                SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}
+        )
+    endif()
 endfunction()
 
 # Prints out all relevant properties of a target for debugging.
@@ -50,7 +59,7 @@ endfunction()
 # Strips all symbols on linux
 #
 # @param target The target whose build symbols will be stripped
-function (smtg_strip_symbols target)
+function(smtg_strip_symbols target)
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_STRIP} $ENV{CROSS_COMPILE} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
     )
@@ -59,7 +68,7 @@ endfunction()
 #! smtg_strip_symbols : Strips all symbols on and creates debug file on Linux 
 #
 # @param target The target whose build symbols will be stripped
-function (smtg_strip_symbols_with_dbg target)
+function(smtg_strip_symbols_with_dbg target)
     add_custom_command(TARGET ${target} POST_BUILD
         # Create a target.so.dbg file with debug information
         COMMAND ${CMAKE_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --only-keep-debug $<TARGET_FILE:${target}> $<TARGET_FILE:${target}>.dbg
@@ -73,7 +82,7 @@ endfunction()
 # A symlink to the output Plug-in will be created as a post build step.
 #
 # @param target The target whose output is the symlink's source.
-function (smtg_create_link_to_plugin target)
+function(smtg_create_link_to_plugin target)
     if(${SMTG_PLUGIN_TARGET_PATH} STREQUAL "")
         message(FATAL_ERROR "Define a proper value for SMTG_PLUGIN_TARGET_PATH")
     endif()
@@ -255,6 +264,7 @@ function(smtg_make_plugin_package target pkg_name extension)
 
         target_link_libraries(${target} PRIVATE "-framework CoreFoundation")
         smtg_setup_universal_binary(${target})
+        smtg_codesign_target(${target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
 
     elseif(SMTG_WIN)
         if(SMTG_CUSTOM_BINARY_LOCATION)
@@ -264,19 +274,33 @@ function(smtg_make_plugin_package target pkg_name extension)
         endif()
         set_target_properties(${target} PROPERTIES 
             SUFFIX                      .${PLUGIN_EXTENSION}
-            LINK_FLAGS                  /EXPORT:GetPluginFactory
             SMTG_PLUGIN_PACKAGE_PATH    ${PLUGIN_PACKAGE_PATH}
         )
-        
-        # In order not to have the PDB inside the Plug-in package in release builds, we specify a different location.
-        if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-            set(WIN_PDB WIN_PDB32)
-        else()
-            set(WIN_PDB WIN_PDB64)
+        if(MSVC)
+            if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+                set_target_properties(${target} PROPERTIES 
+                    LINK_FLAGS              /EXPORT:GetPluginFactory
+                )
+            endif()
         endif()
-        set_target_properties(${target} PROPERTIES
-            PDB_OUTPUT_DIRECTORY        ${PROJECT_BINARY_DIR}/${WIN_PDB}
-        )
+        if(MINGW) # no "lib" prefix for MinGw
+            set_target_properties(${target} PROPERTIES 
+                PREFIX                  ""
+            )   
+        endif()
+        
+        # In order not to have the PDB inside the Plug-in package in release builds, 
+        # we specify a different location (only for MSVC).
+        if(MSVC)
+            if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+                set(WIN_PDB WIN_PDB32)
+            else()
+                set(WIN_PDB WIN_PDB64)
+            endif()
+            set_target_properties(${target} PROPERTIES
+                PDB_OUTPUT_DIRECTORY        ${PROJECT_BINARY_DIR}/${WIN_PDB}
+            )
+        endif()
 
         # Create Bundle on Windows
         if(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
@@ -349,7 +373,7 @@ function(smtg_add_plugin_resource target input_file)
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
         get_target_property(PLUGIN_PACKAGE_RESOURCES ${target} SMTG_PLUGIN_PACKAGE_RESOURCES)
         set(destination_folder "${PLUGIN_PACKAGE_PATH}/${PLUGIN_PACKAGE_RESOURCES}")
-        if(ARGV2)
+        if(ARGC GREATER 2 AND ARGV2)
             set(destination_folder "${destination_folder}/${ARGV2}")
         endif()
         if(NOT EXISTS ${destination_folder})
@@ -358,15 +382,19 @@ function(smtg_add_plugin_resource target input_file)
               "${destination_folder}"
             )
         endif()
+
+        # Make the incoming path absolute.
+        get_filename_component(absolute_input_file_path "${input_file}" ABSOLUTE)
+
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_CURRENT_LIST_DIR}/${input_file}
+            ${absolute_input_file_path}
             ${destination_folder}
         )
     elseif(SMTG_MAC)
         target_sources(${target} PRIVATE ${input_file})
         set(destination_folder "Resources")
-        if(ARGV2)
+        if(ARGC GREATER 2 AND ARGV2)
             set(destination_folder "${destination_folder}/${ARGV2}")
         endif()
 

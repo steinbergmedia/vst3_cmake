@@ -1,7 +1,6 @@
 
-
 # Create a given Directory with Admin permission on Windows
-function (smtg_create_directory_as_admin_win directory_name)
+function(smtg_create_directory_as_admin_win directory_name)
     if(NOT SMTG_WIN)
         message(FATAL_ERROR "smtg_create_directory_as_admin only works on Windows, use it in an if(SMTG_WIN) block")
     endif()
