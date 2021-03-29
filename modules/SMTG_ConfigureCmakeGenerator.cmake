@@ -11,8 +11,8 @@ macro(smtg_specify_output_directories)
         set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
         set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
-    endif()
-endmacro()
+    endif(SMTG_WIN OR (SMTG_MAC AND CMAKE_GENERATOR STREQUAL Xcode))
+endmacro(smtg_specify_output_directories)
 
 # Specify build types
 #
@@ -22,7 +22,7 @@ macro(smtg_specify_build_types)
 
     # This variable is only meaningful to single-configuration generators (such as make and Ninja).
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
-endmacro()
+endmacro(smtg_specify_build_types)
 
 # Group predefined cmake projects
 #
@@ -30,7 +30,7 @@ endmacro()
 macro(smtg_group_predefined_cmake_projects)
     set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER Predefined)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endmacro()
+endmacro(smtg_group_predefined_cmake_projects)
 
 # Configure CMake generator
 macro(smtg_configure_cmake_generator)
@@ -42,4 +42,4 @@ macro(smtg_configure_cmake_generator)
     # (This option is implemented only by Makefile Generators and the Ninja. It 
     # is ignored on other generators.)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE STRING "Generate compile commands" FORCE)
-endmacro()
+endmacro(smtg_configure_cmake_generator)

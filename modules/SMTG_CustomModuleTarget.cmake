@@ -23,6 +23,7 @@ add_custom_target(cmake_modules
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_PlatformToolset.cmake
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_Platform_Windows.cmake
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_PrefixHeader.cmake
+        ${CMAKE_CURRENT_LIST_DIR}/SMTG_SetDebugExecutable.cmake
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_SetupVST3LibraryDefaultPath.cmake
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_UniversalBinary.cmake
         ${CMAKE_CURRENT_LIST_DIR}/SMTG_VST3_SDK.cmake

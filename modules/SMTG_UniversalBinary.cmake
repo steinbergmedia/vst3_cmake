@@ -8,7 +8,7 @@ if(SMTG_MAC)
         # Xcode 10 and 11 can only build x86_64 for macOS
         set(SMTG_BUILD_UNIVERSAL_BINARY 0)
     endif()
-endif()
+endif(SMTG_MAC)
 
 #-------------------------------------------------------------------------------
 # smtg_setup_universal_binary
@@ -16,14 +16,23 @@ endif()
 function(smtg_setup_universal_binary target)
     if(SMTG_MAC)
         if(SMTG_BUILD_UNIVERSAL_BINARY)
-          if(XCODE_VERSION VERSION_GREATER_EQUAL 12)
-            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_OSX_ARCHITECTURES "x86_64;arm64;arm64e")
-            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(ARCHS_STANDARD_64_BIT)")
-          else()
-            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_OSX_ARCHITECTURES "x86_64;i386")
-            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(ARCHS_STANDARD_32_64_BIT)")
-          endif()
-          set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "$<$<CONFIG:Debug>:YES>$<$<CONFIG:Release>:NO>")
-        endif()
-    endif()
-endfunction()
+            if(XCODE_VERSION VERSION_GREATER_EQUAL 12)
+                set_target_properties(${target}
+                    PROPERTIES
+                        XCODE_ATTRIBUTE_OSX_ARCHITECTURES   "x86_64;arm64;arm64e"
+                        XCODE_ATTRIBUTE_ARCHS               "$(ARCHS_STANDARD_64_BIT)"
+                )
+            else()
+                set_target_properties(${target}
+                    PROPERTIES
+                        XCODE_ATTRIBUTE_OSX_ARCHITECTURES   "x86_64;i386"
+                        XCODE_ATTRIBUTE_ARCHS               "$(ARCHS_STANDARD_32_64_BIT)"
+                )
+            endif()
+            set_target_properties(${target}
+                PROPERTIES
+                    XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH        "$<$<CONFIG:Debug>:YES>$<$<CONFIG:Release>:NO>"
+            )
+        endif(SMTG_BUILD_UNIVERSAL_BINARY)
+    endif(SMTG_MAC)
+endfunction(smtg_setup_universal_binary)

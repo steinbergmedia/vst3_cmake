@@ -22,41 +22,45 @@ option(SMTG_RUN_VST_VALIDATOR "Run VST validator on VST3 Plug-ins" ${SMTG_RUN_VS
 # @param target The target which the validator will validate. 
 function(smtg_run_vst_validator target)
     if(TARGET validator)
-        message(STATUS "Setup running validator for ${target}")
+        message(STATUS "[SMTG] Setup running validator for ${target}")
         add_dependencies(${target} validator)
         if(SMTG_WIN)
             set(TARGET_PATH $<TARGET_FILE:${target}>)
-            add_custom_command(TARGET ${target} 
-                POST_BUILD COMMAND 
+            add_custom_command(
+                TARGET ${target} POST_BUILD
+                COMMAND echo [SMTG] Validator started...
+                COMMAND 
                     $<TARGET_FILE:validator> 
                     "${TARGET_PATH}" 
                     WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-                )
+                COMMAND echo [SMTG] Validator finished.
+            )
         else()
             get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
-            add_custom_command(TARGET ${target} 
-                POST_BUILD COMMAND 
+            add_custom_command(
+                TARGET ${target} POST_BUILD
+                COMMAND 
                     $<TARGET_FILE:validator> 
                     $<$<CONFIG:Debug>:${PLUGIN_PACKAGE_PATH}>
                     $<$<CONFIG:Release>:${PLUGIN_PACKAGE_PATH}> 
                     WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
             )
-        endif()
-    endif()
-endfunction()
+        endif(SMTG_WIN)
+    endif(TARGET validator)
+endfunction(smtg_run_vst_validator)
 
 # Adds a VST3 target.
 #
 # @param target The target to which a VST3 Plug-in will be added.
 # @param pkg_name name of the created package
 function(smtg_add_vst3plugin_with_pkgname target pkg_name)
-   #message(STATUS "target is ${target}")
-   #message(STATUS "pkg_name is ${pkg_name}")
+   #message(STATUS "[SMTG] target is ${target}")
+   #message(STATUS "[SMTG] pkg_name is ${pkg_name}")
 
     if(NOT EXISTS ${SMTG_PACKAGE_ICON_PATH})
         set(SMTG_PACKAGE_ICON_PATH ${SDK_ROOT}/vst3_doc/artwork/VST_Logo_Steinberg.ico)
     endif()
-   #message(STATUS "SMTG_PACKAGE_ICON_PATH is ${SMTG_PACKAGE_ICON_PATH}")
+   #message(STATUS "[SMTG] SMTG_PACKAGE_ICON_PATH is ${SMTG_PACKAGE_ICON_PATH}")
 
     add_library(${target} MODULE ${ARGN})
     smtg_set_vst_win_architecture_name(${target})
@@ -64,17 +68,17 @@ function(smtg_add_vst3plugin_with_pkgname target pkg_name)
 
     if(SMTG_ENABLE_TARGET_VARS_LOG)
         smtg_dump_plugin_package_variables(${target})
-    endif()
+    endif(SMTG_ENABLE_TARGET_VARS_LOG)
 
     if(SMTG_RUN_VST_VALIDATOR)
         smtg_run_vst_validator(${target})
-    endif()
+    endif(SMTG_RUN_VST_VALIDATOR)
 
     if(SMTG_CREATE_PLUGIN_LINK)
         smtg_create_link_to_plugin(${target})
-    endif()
+    endif(SMTG_CREATE_PLUGIN_LINK)
 
-endfunction()
+endfunction(smtg_add_vst3plugin_with_pkgname)
 
 # Adds a VST3 target.
 #
@@ -90,9 +94,9 @@ function(smtg_add_vst3plugin target)
     set(sourcesArgs SOURCES_LIST)
     cmake_parse_arguments(PARSE_ARGV 0 PARAMS "${options}" "${oneValueArgs}" "${sourcesArgs}")
    
-    #message(STATUS "PARAMS_UNPARSED_ARGUMENTS is ${PARAMS_UNPARSED_ARGUMENTS}")
-    #message(STATUS "PARAMS_PACKAGE_NAME is ${PARAMS_PACKAGE_NAME}")
-    #message(STATUS "PARAM_SOURCES is ${PARAMS_SOURCES_NAME}")
+    #message(STATUS "[SMTG] PARAMS_UNPARSED_ARGUMENTS is ${PARAMS_UNPARSED_ARGUMENTS}")
+    #message(STATUS "[SMTG] PARAMS_PACKAGE_NAME is ${PARAMS_PACKAGE_NAME}")
+    #message(STATUS "[SMTG] PARAM_SOURCES is ${PARAMS_SOURCES_NAME}")
     
     set(SOURCES "${PARAMS_SOURCES_LIST}")
     if(SOURCES STREQUAL "")
@@ -104,12 +108,12 @@ function(smtg_add_vst3plugin target)
         set(pkg_name ${target})
     endif()
 
-    #message(STATUS "target is ${target}.")
-    #message(STATUS "pkg_name is ${pkg_name}.")
-    #message(STATUS "SOURCES is ${SOURCES}.")
+    #message(STATUS "[SMTG] target is ${target}.")
+    #message(STATUS "[SMTG] pkg_name is ${pkg_name}.")
+    #message(STATUS "[SMTG] SOURCES is ${SOURCES}.")
   
     smtg_add_vst3plugin_with_pkgname(${target} ${pkg_name} ${SOURCES})
-endfunction()
+endfunction(smtg_add_vst3plugin)
 
 # Adds a VST3 target for iOS
 #
@@ -122,30 +126,31 @@ function(smtg_add_ios_vst3plugin sign_identity target pkg_name)
 
         if(SMTG_ENABLE_TARGET_VARS_LOG)
             smtg_dump_plugin_package_variables(${target})
-        endif()
+        endif(SMTG_ENABLE_TARGET_VARS_LOG)
 
         smtg_set_platform_ios(${target})
-        set_target_properties(${target} PROPERTIES 
-            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${SMTG_IOS_DEVELOPMENT_TEAM}
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${SMTG_CODE_SIGN_IDENTITY_IOS}"
-            XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
+        set_target_properties(${target}
+            PROPERTIES 
+                XCODE_ATTRIBUTE_DEVELOPMENT_TEAM    ${SMTG_IOS_DEVELOPMENT_TEAM}
+                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY  "${SMTG_CODE_SIGN_IDENTITY_IOS}"
+                XCODE_ATTRIBUTE_ENABLE_BITCODE      "NO"
         )
 
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
-        add_custom_command(TARGET ${target}
-            COMMENT "Codesign"
-            POST_BUILD
+        add_custom_command(
+            TARGET ${target} POST_BUILD
+            COMMENT "[SMTG] Codesign"            
             COMMAND codesign --force --verbose --sign "${sign_identity}"
                 "${PLUGIN_PACKAGE_PATH}"
         )
 
-    endif()
-endfunction()
+    endif(SMTG_MAC AND XCODE AND SMTG_IOS_DEVELOPMENT_TEAM)
+endfunction(smtg_add_ios_vst3plugin)
 
 function(smtg_add_vst3_resource target input_file)
     smtg_add_plugin_resource(${target} ${input_file})
-endfunction()
+endfunction(smtg_add_vst3_resource)
 
 function(smtg_add_vst3_snapshot target snapshot)
     smtg_add_plugin_snapshot(${target} ${snapshot})
-endfunction()
+endfunction(smtg_add_vst3_snapshot)

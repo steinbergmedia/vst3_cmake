@@ -43,7 +43,7 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
             elseif(BuildTarget STREQUAL iOS)
                 set(iOS TRUE)
             else()
-                message(FATAL_ERROR "BuildTarget must be macOS or iOS not ${BuildTarget}")
+                message(FATAL_ERROR "[SMTG] BuildTarget must be macOS or iOS not ${BuildTarget}")
             endif()
             
             if(macOS)
@@ -82,7 +82,7 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                 set(app-extension-sources ${auv3wrapperiosextension_sources})
                 set(auwrapper-sources ${AppSources})
                 set(auwrapper-lib auv3wrapperios)
-            endif()
+            endif(macOS)
 
             set(auwrapper-xib-resources ${AppUIResources})
 
@@ -93,43 +93,53 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
 
             # app-extension
             add_executable(${app-extension-target} ${app-extension-sources})
-            target_link_libraries(${app-extension-target} PRIVATE ${auwrapper-lib} ${link_frameworks})
+            target_link_libraries(${app-extension-target}
+                PRIVATE
+                    ${auwrapper-lib} 
+                    ${link_frameworks}
+            )
             add_dependencies(${app-extension-target} "${vst3_plugin_target}")
-            set_target_properties(${app-extension-target} PROPERTIES
-                # BUNDLE YES
-                # MACOSX_BUNDLE TRUE
-                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${BundleID}.appex
-                XCODE_ATTRIBUTE_INFOPLIST_PREFIX_HEADER ${AudioUnitConfig}
-                XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${AudioUnitConfig}
-                XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
-                XCODE_ATTRIBUTE_WRAPPER_EXTENSION appex
-                XCODE_PRODUCT_TYPE com.apple.product-type.app-extension
-                ${SMTG_AUV3_FOLDER}
+            set_target_properties(${app-extension-target}
+                PROPERTIES
+                    # BUNDLE YES
+                    # MACOSX_BUNDLE TRUE
+                    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${BundleID}.appex
+                    XCODE_ATTRIBUTE_INFOPLIST_PREFIX_HEADER ${AudioUnitConfig}
+                    XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${AudioUnitConfig}
+                    XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
+                    XCODE_ATTRIBUTE_WRAPPER_EXTENSION appex
+                    XCODE_PRODUCT_TYPE com.apple.product-type.app-extension
+                    ${SMTG_AUV3_FOLDER}
             )
             smtg_set_bundle(${app-extension-target} INFOPLIST "${ExtensionInfoPlist}" PREPROCESS)
             
             # application
             add_executable(${app-target} ${auwrapper-sources} ${auwrapper-xib-resources})
-            target_link_libraries(${app-target} PRIVATE ${auwrapper-lib} ${link_frameworks})
+            target_link_libraries(${app-target}
+                PRIVATE
+                    ${auwrapper-lib}
+                    ${link_frameworks}
+            )
             add_dependencies(${app-target} "${app-extension-target}")
-            set_target_properties(${app-target} PROPERTIES RESOURCE "${auwrapper-xib-resources}")
-            set_target_properties(${app-target} PROPERTIES 
-                MACOSX_BUNDLE TRUE
-                OUTPUT_NAME "${OutputName}"
-                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${BundleID}
-                XCODE_ATTRIBUTE_INFOPLIST_PREFIX_HEADER ${AudioUnitConfig}
-                XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${AudioUnitConfig}
-                XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
-                ${SMTG_AUV3_FOLDER}
+            set_target_properties(${app-target}
+                PROPERTIES
+                    RESOURCE "${auwrapper-xib-resources}"
+                    MACOSX_BUNDLE TRUE
+                    OUTPUT_NAME "${OutputName}"
+                    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${BundleID}
+                    XCODE_ATTRIBUTE_INFOPLIST_PREFIX_HEADER ${AudioUnitConfig}
+                    XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${AudioUnitConfig}
+                    XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
+                    ${SMTG_AUV3_FOLDER}
             )
             smtg_set_bundle(${app-target} INFOPLIST "${AppInfoPlist}" PREPROCESS)
 
             get_target_property(PLUGIN_PACKAGE_PATH ${vst3_plugin_target} SMTG_PLUGIN_PACKAGE_PATH)
 
             if(macOS)
-                add_custom_command(TARGET ${app-extension-target}
-                    COMMENT "Copy VST3 plugin into App-Extension"
-                    POST_BUILD
+                add_custom_command(
+                    TARGET ${app-extension-target} POST_BUILD
+                    COMMENT "[SMTG] Copy VST3 plugin into App-Extension"
                     COMMAND rm -Rf
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/Contents/PlugIns/plugin.vst3"
                     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -138,10 +148,9 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                         "${PLUGIN_PACKAGE_PATH}/"
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/Contents/PlugIns/plugin.vst3/"
                 )
-
-                add_custom_command(TARGET ${app-target}
-                    COMMENT "Copy App-Extension into Application"
-                    POST_BUILD
+                add_custom_command(
+                    TARGET ${app-target} POST_BUILD
+                    COMMENT "[SMTG] Copy App-Extension into Application"
                     COMMAND rm -Rf
                         "$<TARGET_BUNDLE_CONTENT_DIR:${app-target}>/PlugIns/auv3.appex"
                     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -152,13 +161,14 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                 )
                 smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
                 smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
-                set_target_properties(${app-extension-target} PROPERTIES
-                    XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
+                set_target_properties(${app-extension-target}
+                    PROPERTIES
+                        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
                 )
             else()
-                add_custom_command(TARGET ${app-extension-target}
-                    COMMENT "Copy VST3 plugin into App-Extension"
-                    POST_BUILD
+                add_custom_command(
+                    TARGET ${app-extension-target} POST_BUILD
+                    COMMENT "[SMTG] Copy VST3 plugin into App-Extension"
                     COMMAND rm -Rf
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/PlugIns/plugin.vst3"
                     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -167,9 +177,9 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                         "${PLUGIN_PACKAGE_PATH}/"
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/PlugIns/plugin.vst3/"
                 )
-                add_custom_command(TARGET ${app-target}
-                    COMMENT "Copy App-Extension into Application"
-                    POST_BUILD
+                add_custom_command(
+                    TARGET ${app-target} POST_BUILD
+                    COMMENT "[SMTG] Copy App-Extension into Application"
                     COMMAND rm -Rf
                         "$<TARGET_BUNDLE_DIR:${app-target}>/PlugIns/auv3.appex"
                     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -184,19 +194,21 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                 smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
                 smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
 
-                set_target_properties(${app-target} PROPERTIES 
-                    XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
+                set_target_properties(${app-target} 
+                    PROPERTIES 
+                        XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
                 )
-                set_target_properties(${app-extension-target} PROPERTIES 
-                    XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
-                    XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
+                set_target_properties(${app-extension-target}
+                    PROPERTIES 
+                        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
+                        XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
                 )
-            endif()
+            endif(macOS)
 
             set(AUV3_APP_TARGET ${app-target} PARENT_SCOPE)
             set(AUV3_EXTENSION_TARGET ${app-extension-target} PARENT_SCOPE)
 
-        endfunction()
+        endfunction(smtg_add_auv3)
 
-    endif()
-endif()
+    endif(XCODE)
+endif(SMTG_MAC AND SMTG_ADD_VSTGUI)

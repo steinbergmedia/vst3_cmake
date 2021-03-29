@@ -1,8 +1,9 @@
 
 if(SMTG_WIN)
     option(SMTG_USE_STATIC_CRT "use static CRuntime on Windows (option /MT)" OFF)
-endif()
+endif(SMTG_WIN)
 
+# setup the platform toolset (compiler options)
 macro(smtg_setup_platform_toolset)
     # deprecated
     if(SMTG_RENAME_ASSERT)
@@ -16,9 +17,10 @@ macro(smtg_setup_platform_toolset)
     endif()
 
     #------------
+    option(SMTG_ENABLE_ADDRESS_SANITIZER "Enable Address Sanitizer" OFF)
+       
     if(SMTG_LINUX)
-        option(SMTG_ADD_ADDRESS_SANITIZER_CONFIG "Add AddressSanitizer Config (Linux only)" OFF)
-        if(SMTG_ADD_ADDRESS_SANITIZER_CONFIG)
+        if(SMTG_ENABLE_ADDRESS_SANITIZER)
             set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES};ASan")
             add_compile_options($<$<CONFIG:ASan>:-DDEVELOPMENT=1>)
             add_compile_options($<$<CONFIG:ASan>:-fsanitize=address>)
@@ -32,18 +34,20 @@ macro(smtg_setup_platform_toolset)
         set(common_linker_flags "-Wl,--no-undefined")
         set(CMAKE_MODULE_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Module Library Linker Flags")
         set(CMAKE_SHARED_LINKER_FLAGS "${common_linker_flags}" CACHE STRING "Shared Library Linker Flags")
-    endif()
+    endif(SMTG_LINUX)
 
     #------------
     if(UNIX)
         if(XCODE)
-            set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14") # Support c++14
             set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
             add_compile_options(-Winconsistent-missing-override) # Suggest override when missing 
             add_compile_options(-ffast-math -ffp-contract=fast)
+            if(SMTG_ENABLE_ADDRESS_SANITIZER)
+                set(CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER ON)
+                set(CMAKE_XCODE_GENERATE_SCHEME ON)
+            endif(SMTG_ENABLE_ADDRESS_SANITIZER)
         else()
             set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-            set(CMAKE_CXX_STANDARD 14)                  # Support c++14
             add_compile_options(-Wsuggest-override)     # Suggest override when missing 
             if(SMTG_MAC)
                 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
@@ -55,12 +59,11 @@ macro(smtg_setup_platform_toolset)
                     link_libraries(dl)
                  else()
                     link_libraries(stdc++fs pthread dl)
-                endif()
-            endif()
-        endif()
+                endif(ANDROID)
+            endif(SMTG_MAC)
+        endif(XCODE)
     #------------
     elseif(SMTG_WIN)
-        set(CMAKE_CXX_STANDARD 14)                          # Support c++14
         if(MINGW)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-multichar")
             set(common_linker_flags "-Wl,--no-undefined")
@@ -95,7 +98,12 @@ macro(smtg_setup_platform_toolset)
                 add_compile_options($<$<CONFIG:Debug>:/EHsc>)   # Enable C++ Exceptions
                 add_compile_options(/wd4103)                    # Alignment changed after including header
             else()
-                add_compile_options($<$<CONFIG:Debug>:/ZI>)     # Program Database for Edit And Continue
+                if(SMTG_ENABLE_ADDRESS_SANITIZER)
+                    add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>) # Enable Address Sanitizer
+                    add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO>) # Enable Incremental Linking
+                else()
+                    add_compile_options($<$<CONFIG:Debug>:/ZI>)  # Program Database for Edit And Continue
+                endif()
             endif()
             if(SMTG_USE_STATIC_CRT)
                 add_compile_options($<$<CONFIG:Debug>:/MTd>)    # Runtime Library: /MTd = MultiThreaded Debug Runtime
@@ -103,7 +111,7 @@ macro(smtg_setup_platform_toolset)
             else()
                 add_compile_options($<$<CONFIG:Debug>:/MDd>)    # Runtime Library: /MDd = MultiThreadedDLL Debug Runtime
                 add_compile_options($<$<CONFIG:Release>:/MD>)   # Runtime Library: /MD  = MultiThreadedDLL Runtime
-            endif()
-        endif()
-    endif()
-endmacro()
+            endif(SMTG_USE_STATIC_CRT)
+        endif(MINGW)
+    endif(UNIX)
+endmacro(smtg_setup_platform_toolset)

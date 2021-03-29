@@ -1,4 +1,4 @@
-# Welcome to VST SDK 3 cmake
+# Welcome to VST 3 SDK cmake
 
 This repository contains Steinberg's [cmake modules](https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html) and template files which can be used to create VST3 Plug-Ins for platforms like Windows, macOS, iOS and Linux.
 
@@ -8,7 +8,7 @@ For more information about cmake visit [cmake.org](https:://www.cmake.org/).
 
 In order to build a plug-in successfully, it only needs to link to ```sdk``` library. VSTGUI is optional and can be used by linking to ```vstgui_support```.
 
-The following figure shows the dependency map by using AGain.
+The following figure shows the dependency map by using AGain, EditorHost and VST3Inspector:
 
 ```c
 again
@@ -21,6 +21,21 @@ again
     +-- base
     +-- vstgui_uidescription
         +-- vstgui
+```
+```editorhost
+editorhost
++-- sdk_hosting
+    +-- sdk_common
+        +-- base
+        +-- pluginterfaces
+```
+
+```VST3Inspector
+VST3Inspector
++-- vstgui_uidescription 
+|   +-- vstgui
++-- vstgui_standalone
+    +-- vstgui
 ```
 
 ## Naming conventions and guidelines

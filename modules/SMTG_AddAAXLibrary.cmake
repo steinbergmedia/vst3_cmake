@@ -17,9 +17,9 @@ function(smtg_set_aax_win_architecture_name)
 
     set_target_properties(${target}
         PROPERTIES
-        SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
+            SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
     )
-endfunction()
+endfunction(smtg_set_aax_win_architecture_name)
 
 # Adds a AAX target.
 #
@@ -34,11 +34,12 @@ function(smtg_add_aaxplugin_with_pkgname target pkg_name)
     # smtg_dump_plugin_package_variables(${target})
     if(SMTG_MAC AND XCODE)
         # disable automatic signing for AAX
-        set_target_properties(${target} PROPERTIES
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+        set_target_properties(${target}
+            PROPERTIES
+                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
         )
-    endif()
-endfunction()
+    endif(SMTG_MAC AND XCODE)
+endfunction(smtg_add_aaxplugin_with_pkgname)
 
 # Adds a AAX target.
 #
@@ -65,4 +66,4 @@ function(smtg_add_aaxplugin target)
     endif()
 
     smtg_add_aaxplugin_with_pkgname(${target} ${pkg_name} ${SOURCES})
-endfunction()
+endfunction(smtg_add_aaxplugin)

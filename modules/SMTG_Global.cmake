@@ -6,12 +6,12 @@ include(SMTG_DetectPlatform)
 include(SMTG_ConfigureCmakeGenerator)
 include(SMTG_ExportedSymbols)
 
-# Check for in-source build directotry.
+# Check for in-source build directory.
 #
 # In order not to pollute the source directory, using a separate build directory is mandatory.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR OR EXISTS "${CMAKE_BINARY_DIR}/CMakeLists.txt")
-    message(SEND_ERROR "In-source builds are not allowed. Please create a separate build directory and run 'cmake /path/to/folder [options]' there.")
-    message(FATAL_ERROR "You can remove the file \"CMakeCache.txt\" and directory \"CMakeFiles\" in ${CMAKE_SOURCE_DIR}.")
+    message(SEND_ERROR "[SMTG] In-source builds are not allowed. Please create a separate build directory and run 'cmake /path/to/folder [options]' there.")
+    message(FATAL_ERROR "[SMTG] You can remove the file \"CMakeCache.txt\" and directory \"CMakeFiles\" in ${CMAKE_SOURCE_DIR}.")
 endif()
 
 # Global setup functions/macros
@@ -31,4 +31,4 @@ macro(smtg_enable_vst3_sdk)
     
     # Needs to bet set for 'smtg_add_library_main' function.
     set(public_sdk_SOURCE_DIR ${vst3sdk_SOURCE_DIR}/public.sdk)
-endmacro()
+endmacro(smtg_enable_vst3_sdk)
