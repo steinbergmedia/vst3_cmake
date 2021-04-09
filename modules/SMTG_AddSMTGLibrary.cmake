@@ -108,17 +108,31 @@ function(smtg_create_link_to_plugin target)
         file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Debug/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_DEBUG)
         file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Release/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_RELEASE)
 
-        add_custom_command(
-            TARGET ${target} POST_BUILD
-            COMMAND echo [SMTG] Delete previous link...
-            COMMAND rmdir "${SRC_NATIVE_PATH}" & del "${SRC_NATIVE_PATH}"
-            COMMAND echo [SMTG] Creation of the new link...
-            COMMAND mklink /D
-                ${SRC_NATIVE_PATH}
-                "$<$<CONFIG:Debug>:${TARGET_DESTINATION_DEBUG}>"
-                "$<$<CONFIG:Release>:${TARGET_DESTINATION_RELEASE}>"
-            COMMAND echo [SMTG] Finished.
-        )
+        if(NO_MKLINK)
+            add_custom_command(
+                TARGET ${target} POST_BUILD
+                COMMAND echo [SMTG] Delete previous installation...
+                COMMAND rmdir /q /s "${SRC_NATIVE_PATH}"
+                COMMAND echo [SMTG] Copy new build...
+                COMMAND xcopy /E /G /H /R /I
+                    "$<$<CONFIG:Debug>:${TARGET_DESTINATION_DEBUG}>"
+                    "$<$<CONFIG:Release>:${TARGET_DESTINATION_RELEASE}>"
+                    ${SRC_NATIVE_PATH}
+                COMMAND echo [SMTG] Finished.
+            )
+        else()
+            add_custom_command(
+                TARGET ${target} POST_BUILD
+                COMMAND echo [SMTG] Delete previous link...
+                COMMAND rmdir "${SRC_NATIVE_PATH}" & del "${SRC_NATIVE_PATH}"
+                COMMAND echo [SMTG] Creation of the new link...
+                COMMAND mklink /D
+                    ${SRC_NATIVE_PATH}
+                    "$<$<CONFIG:Debug>:${TARGET_DESTINATION_DEBUG}>"
+                    "$<$<CONFIG:Release>:${TARGET_DESTINATION_RELEASE}>"
+                COMMAND echo [SMTG] Finished.
+            )
+        endif()
     else()
         add_custom_command(
             TARGET ${target} POST_BUILD
