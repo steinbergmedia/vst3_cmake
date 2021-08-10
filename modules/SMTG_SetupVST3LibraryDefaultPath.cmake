@@ -5,6 +5,9 @@ function(smtg_get_default_vst3_path)
         set(win64Found "1")
         if(NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
             string(FIND ${CMAKE_GENERATOR_PLATFORM} x64 win64Found)
+            if(${win64Found} EQUAL -1)
+                string(FIND ${CMAKE_GENERATOR_PLATFORM} ARM64 win64Found)
+            endif()
         elseif(${CMAKE_GENERATOR} STREQUAL "Visual Studio 15 2017" OR 
                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 14 2015" OR 
                ${CMAKE_GENERATOR} STREQUAL "Visual Studio 12 2013" OR 

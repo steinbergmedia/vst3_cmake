@@ -41,6 +41,7 @@ macro(smtg_setup_platform_toolset)
         if(XCODE)
             set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
             add_compile_options(-Winconsistent-missing-override) # Suggest override when missing 
+            add_compile_options(-Werror=return-type)
             add_compile_options(-ffast-math -ffp-contract=fast)
             if(SMTG_ENABLE_ADDRESS_SANITIZER)
                 set(CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER ON)
