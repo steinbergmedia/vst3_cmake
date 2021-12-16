@@ -1,26 +1,28 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Includes
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 include(SMTG_AddSMTGLibrary)
 
+#------------------------------------------------------------------------
 # Returns the windows architecture.
 #
 # This name will be used as a folder name inside the Plug-in package.
-# The variable WIN_ARCHITECTURE_NAME will be set.
-function(smtg_set_aax_win_architecture_name)
-    if(SMTG_WIN AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(WIN_ARCHITECTURE_NAME "x64")
-    else()
+# The variable SMTG_WIN_ARCHITECTURE_NAME will be set.
+function(smtg_target_set_aax_win_architecture_name target)
+    if(${GENERATOR_PLATFORM} MATCHES "win32")
         set(WIN_ARCHITECTURE_NAME "win32")
+    else()
+        set(WIN_ARCHITECTURE_NAME "x64")    
     endif()
 
     set_target_properties(${target}
         PROPERTIES
             SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}           
     )
-endfunction(smtg_set_aax_win_architecture_name)
+endfunction(smtg_target_set_aax_win_architecture_name)
 
+#------------------------------------------------------------------------
 # Adds a AAX target.
 #
 # @param target The target to which a AAX Plug-in will be added. 
@@ -29,8 +31,8 @@ endfunction(smtg_set_aax_win_architecture_name)
 # smtg_add_aaxplugin_with_pkgname(${target} "A Gain" ${again_sources})
 function(smtg_add_aaxplugin_with_pkgname target pkg_name)
     add_library(${target} MODULE ${ARGN})
-    smtg_set_aax_win_architecture_name(${target})
-    smtg_make_plugin_package(${target} ${pkg_name} aaxplugin)
+    smtg_target_set_aax_win_architecture_name(${target})
+    smtg_target_make_plugin_package(${target} ${pkg_name} aaxplugin)
     # smtg_dump_plugin_package_variables(${target})
     if(SMTG_MAC AND XCODE)
         # disable automatic signing for AAX
@@ -41,6 +43,7 @@ function(smtg_add_aaxplugin_with_pkgname target pkg_name)
     endif(SMTG_MAC AND XCODE)
 endfunction(smtg_add_aaxplugin_with_pkgname)
 
+#------------------------------------------------------------------------
 # Adds a AAX target.
 #
 # @param target The target to which a AAX Plug-in will be added.

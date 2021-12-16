@@ -1,8 +1,9 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Generate Source Groups
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
+#------------------------------------------------------------------------
 function(smtg_generate_source_groups root)
     foreach(source ${ARGN})
         set(path ${source})
@@ -15,6 +16,7 @@ function(smtg_generate_source_groups root)
     endforeach()
 endfunction(smtg_generate_source_groups)
 
+#------------------------------------------------------------------------
 function(smtg_target_generate_source_groups target)
 	get_target_property(_source_list ${target} SOURCES)
 

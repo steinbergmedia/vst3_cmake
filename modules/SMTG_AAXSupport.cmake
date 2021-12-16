@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------------
 macro(setupAaxSupport)
     # AAX SDK Location
     if(SMTG_MAC OR SMTG_WIN)

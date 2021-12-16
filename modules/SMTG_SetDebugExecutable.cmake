@@ -1,5 +1,6 @@
 
-function(smtg_set_debug_executable target executable)
+#------------------------------------------------------------------------
+function(smtg_target_set_debug_executable target executable)
     if(CMAKE_GENERATOR STREQUAL Xcode)
         set_target_properties(${target}
             PROPERTIES
@@ -26,4 +27,11 @@ function(smtg_set_debug_executable target executable)
             ) 
         endif()
     endif(MSVC)
+endfunction(smtg_target_set_debug_executable)
+
+#------------------------------------------------------------------------
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_set_debug_executable target executable)
+    message(DEPRECATION "[SMTG] Use smtg_target_set_debug_executable instead of smtg_set_debug_executable")
+    smtg_target_set_debug_executable (${target} ${executable})
 endfunction(smtg_set_debug_executable)

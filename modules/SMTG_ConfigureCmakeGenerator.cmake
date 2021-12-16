@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------------
 # Specify Output directories
 #
 # XCode is creating the "Debug/Release" folder on its own and does not need to be added.
@@ -14,6 +15,7 @@ macro(smtg_specify_output_directories)
     endif(SMTG_WIN OR (SMTG_MAC AND CMAKE_GENERATOR STREQUAL Xcode))
 endmacro(smtg_specify_output_directories)
 
+#------------------------------------------------------------------------
 # Specify build types
 #
 # Specifies what build types (configurations) will be available.
@@ -24,6 +26,7 @@ macro(smtg_specify_build_types)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
 endmacro(smtg_specify_build_types)
 
+#------------------------------------------------------------------------
 # Group predefined cmake projects
 #
 # Put predefined targets like "ALL_BUILD" and "ZERO_CHECK" into a separate folder within the IDE.
@@ -32,6 +35,7 @@ macro(smtg_group_predefined_cmake_projects)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endmacro(smtg_group_predefined_cmake_projects)
 
+#------------------------------------------------------------------------
 # Configure CMake generator
 macro(smtg_configure_cmake_generator)
     smtg_specify_output_directories()

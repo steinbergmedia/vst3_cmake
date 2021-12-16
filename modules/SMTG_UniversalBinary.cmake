@@ -1,7 +1,7 @@
 
 if(SMTG_MAC)
     if(XCODE_VERSION VERSION_GREATER_EQUAL 12)
-        option(SMTG_BUILD_UNIVERSAL_BINARY "Build universal binary (x86_64 & arm64)" OFF)
+        option(SMTG_BUILD_UNIVERSAL_BINARY "Build universal binary (x86_64 & arm64)" ON)
     elseif(XCODE_VERSION VERSION_LESS 10)
         option(SMTG_BUILD_UNIVERSAL_BINARY "Build universal binary (32 & 64 bit)" OFF)
     else()
@@ -10,10 +10,10 @@ if(SMTG_MAC)
     endif()
 endif(SMTG_MAC)
 
-#-------------------------------------------------------------------------------
-# smtg_setup_universal_binary
-#-------------------------------------------------------------------------------
-function(smtg_setup_universal_binary target)
+#------------------------------------------------------------------------
+# smtg_target_setup_universal_binary
+#------------------------------------------------------------------------
+function(smtg_target_setup_universal_binary target)
     if(SMTG_MAC)
         if(SMTG_BUILD_UNIVERSAL_BINARY)
             if(XCODE_VERSION VERSION_GREATER_EQUAL 12)
@@ -35,4 +35,11 @@ function(smtg_setup_universal_binary target)
             )
         endif(SMTG_BUILD_UNIVERSAL_BINARY)
     endif(SMTG_MAC)
+endfunction(smtg_target_setup_universal_binary)
+
+#------------------------------------------------------------------------
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_setup_universal_binary target)
+    message(DEPRECATION "[SMTG] Use smtg_target_setup_universal_binary instead of smtg_setup_universal_binary")
+    smtg_target_setup_universal_binary (${target})
 endfunction(smtg_setup_universal_binary)

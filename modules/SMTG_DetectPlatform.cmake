@@ -5,6 +5,9 @@
 # available globally.
 set(SMTG_PLATFORM_DETECTION_COMMENT "The platform which was detected by SMTG")
 
+#------------------------------------------------------------------------
+# Detect the Platform
+#
 macro(smtg_detect_platform)
 	if(APPLE)
 		set(SMTG_MAC TRUE CACHE INTERNAL ${SMTG_PLATFORM_DETECTION_COMMENT})
@@ -15,6 +18,9 @@ macro(smtg_detect_platform)
 	endif(APPLE)
 endmacro(smtg_detect_platform)
 
+#------------------------------------------------------------------------
+# Detect the default Xcode Version
+#
 macro(smtg_detect_xcode_version)
     if(SMTG_MAC)
         if(NOT DEFINED ENV{XCODE_VERSION})

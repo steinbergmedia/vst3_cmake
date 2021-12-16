@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------------
 macro(smtg_enable_vstgui_support)
     set(VSTGUI_DISABLE_UNITTESTS 1)
     set(VSTGUI_STANDALONE_EXAMPLES OFF)
@@ -44,9 +45,9 @@ macro(smtg_enable_vstgui_support)
         PUBLIC
             base
     )
-    smtg_setup_universal_binary(vstgui_support)
-    smtg_setup_universal_binary(vstgui)
-    smtg_setup_universal_binary(vstgui_uidescription)
+    smtg_target_setup_universal_binary(vstgui_support)
+    smtg_target_setup_universal_binary(vstgui)
+    smtg_target_setup_universal_binary(vstgui_uidescription)
     if(SMTG_MAC)
         if(XCODE)
             target_link_libraries(vstgui_support

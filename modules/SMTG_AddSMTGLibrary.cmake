@@ -14,40 +14,40 @@ set(SMTG_CUSTOM_BINARY_LOCATION "" CACHE PATH "Customize output location for bin
 # define the C++ standard version to use for plugins
 set(SMTG_CXX_STANDARD "" CACHE STRING "C++ standard version used for plugins: 14, 17, 20")
 
+#------------------------------------------------------------------------
 # Returns the windows architecture.
 #
 # This name will be used as a folder name inside the Plug-in package.
-# The variable WIN_ARCHITECTURE_NAME will be set.
-function(smtg_set_vst_win_architecture_name target)
+# The variable SMTG_WIN_ARCHITECTURE_NAME will be set.
+function(smtg_target_set_vst_win_architecture_name target)
     if(SMTG_WIN)
         if(DEFINED CMAKE_GENERATOR_PLATFORM AND CMAKE_GENERATOR_PLATFORM)
             string(TOLOWER ${CMAKE_GENERATOR_PLATFORM} GENERATOR_PLATFORM)
         endif()
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            if(${GENERATOR_PLATFORM} MATCHES "arm64")
-                set(WIN_ARCHITECTURE_NAME "arm_64-win")
-            else()
-                set(WIN_ARCHITECTURE_NAME "x86_64-win")
-            endif()
+
+        if(${GENERATOR_PLATFORM} MATCHES "arm64*")
+            set(WIN_ARCHITECTURE_NAME "arm_64")
+        elseif(${GENERATOR_PLATFORM} MATCHES "arm")
+            set(WIN_ARCHITECTURE_NAME "arm")
+        elseif(${GENERATOR_PLATFORM} MATCHES "win32")
+            set(WIN_ARCHITECTURE_NAME "x86")
         else()
-            if(${GENERATOR_PLATFORM} MATCHES "arm")
-                set(WIN_ARCHITECTURE_NAME "arm-win")
-            else()
-                set(WIN_ARCHITECTURE_NAME "x86-win")
-            endif()
+            set(WIN_ARCHITECTURE_NAME "x86_64")
         endif()
+        set(WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}-win)
 
         set_target_properties(${target}
             PROPERTIES
                 SMTG_WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}
         )
     endif(SMTG_WIN)
-endfunction(smtg_set_vst_win_architecture_name)
+endfunction(smtg_target_set_vst_win_architecture_name)
 
+#------------------------------------------------------------------------
 # Prints out all relevant properties of a target for debugging.
 #
 # @param target The target whose properties will be printed.
-function(smtg_dump_plugin_package_variables target)
+function(smtg_target_dump_plugin_package_variables target)
     cmake_print_properties(
         TARGETS
             ${target}
@@ -60,25 +60,26 @@ function(smtg_dump_plugin_package_variables target)
             SMTG_PLUGIN_PACKAGE_CONTENTS
             SMTG_PLUGIN_PACKAGE_RESOURCES
             SMTG_PLUGIN_PACKAGE_SNAPSHOTS
-            SMTG_PLUGIN_USER_DEFINED_TARGET
             SMTG_WIN_ARCHITECTURE_NAME
     )
-endfunction(smtg_dump_plugin_package_variables)
+endfunction(smtg_target_dump_plugin_package_variables)
 
+#------------------------------------------------------------------------
 # Strips all symbols on linux
 #
 # @param target The target whose build symbols will be stripped
-function(smtg_strip_symbols target)
+function(smtg_target_strip_symbols target)
     add_custom_command(
         TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_STRIP} $ENV{CROSS_COMPILE} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
     )
-endfunction(smtg_strip_symbols)
+endfunction(smtg_target_strip_symbols)
 
-#! smtg_strip_symbols : Strips all symbols on and creates debug file on Linux 
+#------------------------------------------------------------------------
+#! smtg_target_strip_symbols_with_dbg : Strips all symbols on and creates debug file on Linux 
 #
 # @param target The target whose build symbols will be stripped
-function(smtg_strip_symbols_with_dbg target)
+function(smtg_target_strip_symbols_with_dbg target)
     add_custom_command(
         TARGET ${target} POST_BUILD
         # Create a target.so.dbg file with debug information
@@ -86,23 +87,25 @@ function(smtg_strip_symbols_with_dbg target)
         COMMAND ${CMAKE_STRIP} $ENV{CROSS_COMPILE} --strip-debug --strip-unneeded $<TARGET_FILE:${target}>
         COMMAND ${CMAKE_OBJECT_COPY} $ENV{CROSS_COMPILE}objcopy --add-gnu-debuglink=$<TARGET_FILE:${target}>.dbg $<TARGET_FILE:${target}>
     )
-endfunction(smtg_strip_symbols_with_dbg)
+endfunction(smtg_target_strip_symbols_with_dbg)
 
+#------------------------------------------------------------------------
 # Creates a symlink to the targets output resp Plug-in.
 #
 # A symlink to the output Plug-in will be created as a post build step.
 #
 # @param target The target whose output is the symlink's source.
-function(smtg_create_link_to_plugin target)
-    if(${SMTG_PLUGIN_TARGET_PATH} STREQUAL "")
-        message(FATAL_ERROR "[SMTG] Define a proper value for SMTG_PLUGIN_TARGET_PATH")
+function(smtg_target_create_link_to_plugin target destination)
+    if(${destination} STREQUAL "")
+        message(FATAL_ERROR "[SMTG] no destination defined!")
     endif()
 
+    get_target_property(PLUGIN_PACKAGE_NAME ${target} SMTG_PLUGIN_PACKAGE_NAME)
     get_target_property(TARGET_SOURCE       ${target} SMTG_PLUGIN_PACKAGE_PATH)
-    get_target_property(TARGET_DESTINATION  ${target} SMTG_PLUGIN_USER_DEFINED_TARGET)
+    set(TARGET_DESTINATION ${destination})
+
     if(SMTG_WIN)
-        get_target_property(PLUGIN_BINARY_DIR   ${target} SMTG_PLUGIN_BINARY_DIR)
-        get_target_property(PLUGIN_PACKAGE_NAME ${target} SMTG_PLUGIN_PACKAGE_NAME)
+        get_target_property(PLUGIN_BINARY_DIR ${target} SMTG_PLUGIN_BINARY_DIR)
 
         file(TO_NATIVE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
         file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Debug/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_DEBUG)
@@ -126,19 +129,21 @@ function(smtg_create_link_to_plugin target)
             COMMAND ln -svfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
         )
     endif(SMTG_WIN)
-endfunction(smtg_create_link_to_plugin)
+endfunction(smtg_target_create_link_to_plugin)
 
 set(SMTG_DESKTOP_INI_PATH ${CMAKE_CURRENT_LIST_DIR}/../templates/desktop.ini.in)
 get_directory_property(hasParent PARENT_DIRECTORY)
 if(hasParent)
     set(SMTG_DESKTOP_INI_PATH ${SMTG_DESKTOP_INI_PATH} PARENT_SCOPE)
 endif(hasParent)
+
+#------------------------------------------------------------------------
 # Customizes folder icon on windows
 #
 # Customizes folder icon on windows by copying desktop.ini and PlugIn.ico into the package.
 #
 # @param target The target whose folder icon will be customized.
-function(smtg_add_folder_icon target icon)
+function(smtg_target_add_folder_icon target icon)
     get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
     add_custom_command(
         TARGET ${target} POST_BUILD
@@ -153,14 +158,15 @@ function(smtg_add_folder_icon target icon)
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}
     )
-endfunction(smtg_add_folder_icon)
+endfunction(smtg_target_add_folder_icon)
 
+#------------------------------------------------------------------------
 # Adds the Plug-in's main entry point.
 #
 # The variable public_sdk_SOURCE_DIR needs to be specified.
 #
 # @param target The target to which the main entry point will be added.
-function(smtg_add_library_main target)
+function(smtg_target_add_library_main target)
     if(public_sdk_SOURCE_DIR)
         if(SMTG_MAC)
             target_sources (${target} 
@@ -179,8 +185,9 @@ function(smtg_add_library_main target)
             )
         endif(SMTG_MAC)
     endif(public_sdk_SOURCE_DIR)
-endfunction(smtg_add_library_main)
+endfunction(smtg_target_add_library_main)
 
+#------------------------------------------------------------------------
 # Returns the linux architecture name.
 #
 # This name will be used as a folder name inside the Plug-in package.
@@ -208,27 +215,24 @@ function(smtg_get_linux_architecture_name)
     endif(ANDROID)
 endfunction(smtg_get_linux_architecture_name)
 
+#------------------------------------------------------------------------
 # Prepare the target to build a Plug-in package.
 #
 # @param target The target whose output will be put into a package.
 # @param extension The package's extension
-function(smtg_make_plugin_package target pkg_name extension)
+function(smtg_target_make_plugin_package target pkg_name extension)
     if(${pkg_name} STREQUAL "")
         set(pkg_name ${target})
     endif()
     set(pkg_extension ${extension})
-    if(${extension} STREQUAL "ski")
-        if(SMTG_WIN)
+    if(SMTG_WIN)
+        if(${extension} STREQUAL "bundle")
             set(extension dll)
-            if(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
-                set(pkg_extension bundle)
-            else()
-                set(pkg_extension ${extension})
-            endif(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
-        else()
-            set(extension bundle)
-        endif(SMTG_WIN)
-    endif()
+            if(NOT SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+                set(pkg_extension dll)
+            endif(NOT SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+        endif()
+    endif(SMTG_WIN)
     string(TOUPPER ${extension} PLUGIN_EXTENSION_UPPER)
 
     if(SMTG_CUSTOM_BINARY_LOCATION)
@@ -246,14 +250,13 @@ function(smtg_make_plugin_package target pkg_name extension)
             SMTG_PLUGIN_PACKAGE_CONTENTS    Contents
             SMTG_PLUGIN_PACKAGE_RESOURCES   Contents/Resources
             SMTG_PLUGIN_PACKAGE_SNAPSHOTS   Snapshots
-            SMTG_PLUGIN_USER_DEFINED_TARGET ${SMTG_PLUGIN_TARGET_PATH}/${PLUGIN_PACKAGE_NAME}
     )
 
     get_target_property(PLUGIN_BINARY_DIR   ${target} SMTG_PLUGIN_BINARY_DIR)
     get_target_property(PLUGIN_EXTENSION    ${target} SMTG_PLUGIN_EXTENSION)
     get_target_property(PLUGIN_PACKAGE_NAME ${target} SMTG_PLUGIN_PACKAGE_NAME)
 
-    smtg_add_library_main(${target})
+    smtg_target_add_library_main(${target})
     
     if(SMTG_CXX_STANDARD)
         target_compile_features(${target}
@@ -300,8 +303,8 @@ function(smtg_make_plugin_package target pkg_name extension)
             PRIVATE
                 "-framework CoreFoundation"
         )
-        smtg_setup_universal_binary(${target})
-        smtg_codesign_target(${target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
+        smtg_target_setup_universal_binary(${target})
+        smtg_target_codesign(${target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
 
     elseif(SMTG_WIN)
         if(SMTG_CUSTOM_BINARY_LOCATION)
@@ -366,7 +369,7 @@ function(smtg_make_plugin_package target pkg_name extension)
                 endif(SMTG_CUSTOM_BINARY_LOCATION)
             endforeach()
             if(EXISTS ${SMTG_PACKAGE_ICON_PATH})
-                smtg_add_folder_icon(${target} ${SMTG_PACKAGE_ICON_PATH})
+                smtg_target_add_folder_icon(${target} ${SMTG_PACKAGE_ICON_PATH})
             endif()
         endif(SMTG_CREATE_BUNDLE_FOR_WINDOWS)
         # Disable warning LNK4221: "This object file does not define any previously undefined public symbols...".
@@ -396,21 +399,22 @@ function(smtg_make_plugin_package target pkg_name extension)
 
         # Strip symbols in Release config
         if(${CMAKE_BUILD_TYPE} MATCHES Release)
-            smtg_strip_symbols(${target})
+            smtg_target_strip_symbols(${target})
         elseif(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
-            smtg_strip_symbols_with_dbg(${target})
+            smtg_target_strip_symbols_with_dbg(${target})
         endif()
     endif(SMTG_MAC)
-endfunction(smtg_make_plugin_package)
+endfunction(smtg_target_make_plugin_package)
 
+#------------------------------------------------------------------------
 # Adds a resource for a target 
 #
 # The resource which gets copied into the targets Resource Bundle directory.
 #
 # @param target cmake target
 # @param input_file resource file
-# @param ARGV2 destination subfolder
-function(smtg_add_plugin_resource target input_file)
+# @param ARGV2 destination subfolder inside the Resource folder [optional]
+function(smtg_target_add_plugin_resource target input_file)
     if(SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
         get_target_property(PLUGIN_PACKAGE_RESOURCES ${target} SMTG_PLUGIN_PACKAGE_RESOURCES)
@@ -450,23 +454,40 @@ function(smtg_add_plugin_resource target input_file)
                 MACOSX_PACKAGE_LOCATION "${destination_folder}"
         )
     endif(SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
-endfunction(smtg_add_plugin_resource)
+endfunction(smtg_target_add_plugin_resource)
 
-# Adds a snapshot for a target.
+#------------------------------------------------------------------------
+# Adds multiple snapshots to target.
 #
-# Adds a snapshot for a target which gets copied into the targets Snapshot Bundle directory.
+# Usage:
+#  smtg_target_add_plugin_snapshots (target
+#    RESOURCES
+#      bitmap0.png
+#      bitmap1.png
+#  )
+# This adds both bitmaps to <Bundle>/Resources/Snapshots
 #
-# @param target The target to which the snapshot will be added
-# @param snapshot The snapshot to be added.
-function(smtg_add_plugin_snapshot target snapshot)
+# @param target The target to which the resources will be added. 
+function(smtg_target_add_plugin_snapshots target)
+    cmake_parse_arguments(
+        PARSED_ARGS # Prefix of output variables e.g. PARSED_ARGS_RESOURCES
+        ""          # List of names for boolean arguments
+        ""          # List of names for mono-valued arguments
+        "RESOURCES" # List of names for multi-valued arguments resp. lists
+        ${ARGN}     # Arguments of the function to parse
+    )
     get_target_property(PLUGIN_PACKAGE_SNAPSHOTS ${target} SMTG_PLUGIN_PACKAGE_SNAPSHOTS)
-    smtg_add_plugin_resource (${target} ${snapshot} ${PLUGIN_PACKAGE_SNAPSHOTS}) 
-endfunction(smtg_add_plugin_snapshot)
+  
+    foreach(rsrc ${PARSED_ARGS_RESOURCES})
+        smtg_target_add_plugin_resource (${target} ${rsrc} ${PLUGIN_PACKAGE_SNAPSHOTS}) 
+    endforeach()
+endfunction(smtg_target_add_plugin_snapshots)
 
+#------------------------------------------------------------------------
 # Adds multiple resources to target.
 #
 # Usage:
-#  smtg_add_vst3_resources (target
+#  smtg_target_add_plugin_resources (target
 #    RESOURCES
 #      bitmap0.png
 #      bitmap1.png
@@ -476,7 +497,7 @@ endfunction(smtg_add_plugin_snapshot)
 # This adds both bitmaps to <Bundle>/Resources/Graphics
 #
 # @param target The target to which the resources will be added. 
-function(smtg_add_vst3_resources target)
+function(smtg_target_add_plugin_resources target)
     cmake_parse_arguments(
         PARSED_ARGS # Prefix of output variables e.g. PARSED_ARGS_RESOURCES
         ""          # List of names for boolean arguments
@@ -486,6 +507,65 @@ function(smtg_add_vst3_resources target)
     )
 
     foreach(rsrc ${PARSED_ARGS_RESOURCES})
-        smtg_add_plugin_resource (${target} ${rsrc} ${PARSED_ARGS_OUTPUT_SUBDIRECTORY}) 
+        smtg_target_add_plugin_resource (${target} ${rsrc} ${PARSED_ARGS_OUTPUT_SUBDIRECTORY}) 
     endforeach()
-endfunction(smtg_add_vst3_resources)
+endfunction(smtg_target_add_plugin_resources)
+
+#------------------------------------------------------------------------
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_add_folder_icon target icon)
+    message(DEPRECATION "[SMTG] Use smtg_target_add_folder_icon instead of smtg_add_folder_icon")
+    smtg_target_add_folder_icon (${target} ${icon})
+endfunction(smtg_add_folder_icon)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_create_link_to_plugin target)
+    message(DEPRECATION "[SMTG] Use smtg_target_create_link_to_plugin instead of smtg_create_link_to_plugin")
+    smtg_get_default_plugin_path()
+    smtg_target_create_link_to_plugin(${target} ${SMTG_PLUGIN_TARGET_DEFAULT_PATH})
+endfunction(smtg_create_link_to_plugin)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_make_plugin_package target pkg_name extension)
+    message(DEPRECATION "[SMTG] Use smtg_target_make_plugin_package instead of smtg_make_plugin_package")
+    smtg_target_make_plugin_package (${target} ${pkg_name} ${extension})
+endfunction(smtg_make_plugin_package)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_strip_symbols target)
+    message(DEPRECATION "[SMTG] Use smtg_target_strip_symbols instead of smtg_strip_symbols")
+    smtg_target_strip_symbols (${target})
+endfunction(smtg_strip_symbols)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_add_library_main target)
+    message(DEPRECATION "[SMTG] Use smtg_target_add_library_main instead of smtg_add_library_main")
+    smtg_target_add_library_main (${target})
+endfunction(smtg_add_library_main)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_strip_symbols_with_dbg target)
+    message(DEPRECATION "[SMTG] Use smtg_target_strip_symbols_with_dbg instead of smtg_strip_symbols_with_dbg")
+    smtg_target_strip_symbols_with_dbg (${target})
+endfunction(smtg_strip_symbols_with_dbg)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_dump_plugin_package_variables target)
+    message(DEPRECATION "[SMTG] Use smtg_target_dump_plugin_package_variables instead of smtg_dump_plugin_package_variables")
+    smtg_target_dump_plugin_package_variables (${target})
+endfunction(smtg_dump_plugin_package_variables)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_add_plugin_resource target input_file)
+    message(DEPRECATION "[SMTG] Use smtg_target_add_plugin_resource instead of smtg_add_plugin_resource")
+    smtg_target_add_plugin_resource (${target} ${input_file})
+endfunction(smtg_add_plugin_resource)
+
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_add_plugin_snapshot target snapshot)
+    message(DEPRECATION "[SMTG] Use smtg_target_add_plugin_snapshots instead of smtg_add_plugin_snapshot")
+    smtg_target_add_plugin_snapshots (${target}
+        RESOURCES
+            ${snapshot}
+    )
+endfunction(smtg_add_plugin_snapshot)

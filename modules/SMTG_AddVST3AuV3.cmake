@@ -1,7 +1,7 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Includes
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 include(SMTG_CodeSign)
 
 if(SMTG_MAC AND SMTG_ADD_VSTGUI)
@@ -23,8 +23,8 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
             ${SDK_ROOT}/public.sdk/source/vst/auv3wrapper/Shared/AUv3WrapperFactory.mm
         )
 
-        #--------------------------------------------------------------------------------------------------------
-        # Add a AudioUnit Version 3 target for macOS
+        #------------------------------------------------------------------------
+        # Add a AudioUnit Version 3 App target for macOS
         # @param target                 target name
         # @param BuildTarget            must be either "macOS" or "iOS"
         # @param OutputName             Output App name
@@ -36,8 +36,8 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
         # @param AppInfoPlist           Info.plist for the application
         # @param ExtensionInfoPlist     Info.plist for the app-extension
         # @param vst3_plugin_target     the vst3 plugin target
-        #--------------------------------------------------------------------------------------------------------
-        function(smtg_add_auv3 target BuildTarget OutputName BundleID AudioUnitConfigHeader EntitlementFile AppSources AppUIResources AppInfoPlist ExtensionInfoPlist vst3_plugin_target)
+        #------------------------------------------------------------------------
+        function(smtg_add_auv3_app target BuildTarget OutputName BundleID AudioUnitConfigHeader EntitlementFile AppSources AppUIResources AppInfoPlist ExtensionInfoPlist vst3_plugin_target)
             if(BuildTarget STREQUAL macOS)
                 set(macOS TRUE)
             elseif(BuildTarget STREQUAL iOS)
@@ -111,7 +111,7 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                     XCODE_PRODUCT_TYPE com.apple.product-type.app-extension
                     ${SMTG_AUV3_FOLDER}
             )
-            smtg_set_bundle(${app-extension-target} INFOPLIST "${ExtensionInfoPlist}" PREPROCESS)
+            smtg_target_set_bundle(${app-extension-target} INFOPLIST "${ExtensionInfoPlist}" PREPROCESS)
             
             # application
             add_executable(${app-target} ${auwrapper-sources} ${auwrapper-xib-resources})
@@ -132,7 +132,7 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
                     ${SMTG_AUV3_FOLDER}
             )
-            smtg_set_bundle(${app-target} INFOPLIST "${AppInfoPlist}" PREPROCESS)
+            smtg_target_set_bundle(${app-target} INFOPLIST "${AppInfoPlist}" PREPROCESS)
 
             get_target_property(PLUGIN_PACKAGE_PATH ${vst3_plugin_target} SMTG_PLUGIN_PACKAGE_PATH)
 
@@ -159,8 +159,8 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/$<TARGET_FILE_NAME:${app-extension-target}>.appex/"
                         "$<TARGET_BUNDLE_CONTENT_DIR:${app-target}>/PlugIns/auv3.appex/"
                 )
-                smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
-                smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
+                smtg_target_codesign(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
+                smtg_target_codesign(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_CODE_SIGN_IDENTITY_MAC}")
                 set_target_properties(${app-extension-target}
                     PROPERTIES
                         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${EntitlementFile}"
@@ -189,10 +189,10 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
                         "$<TARGET_BUNDLE_DIR:${app-target}>/PlugIns/auv3.appex/"
                 )
 
-                smtg_set_platform_ios(${app-target})
-                smtg_set_platform_ios(${app-extension-target})
-                smtg_codesign_target(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
-                smtg_codesign_target(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
+                smtg_target_set_platform_ios(${app-target})
+                smtg_target_set_platform_ios(${app-extension-target})
+                smtg_target_codesign(${app-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
+                smtg_target_codesign(${app-extension-target} ${SMTG_IOS_DEVELOPMENT_TEAM} "${SMTG_IOS_DEVELOPMENT_TEAM}")
 
                 set_target_properties(${app-target} 
                     PROPERTIES 
@@ -208,6 +208,12 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
             set(AUV3_APP_TARGET ${app-target} PARENT_SCOPE)
             set(AUV3_EXTENSION_TARGET ${app-extension-target} PARENT_SCOPE)
 
+        endfunction(smtg_add_auv3_app)      
+
+        # Deprecated since 3.7.4 -----------------------------
+        function(smtg_add_auv3 target BuildTarget OutputName BundleID AudioUnitConfigHeader EntitlementFile AppSources AppUIResources AppInfoPlist ExtensionInfoPlist vst3_plugin_target)
+            message(DEPRECATION "[SMTG] Use smtg_add_auv3_app instead of smtg_add_auv3")
+            smtg_add_auv3_app (${target} ${BuildTarget} ${OutputName} ${BundleID} ${AudioUnitConfigHeader} ${EntitlementFile} ${AppSources} ${AppUIResources} ${AppInfoPlist} ${ExtensionInfoPlist} ${vst3_plugin_target})
         endfunction(smtg_add_auv3)
 
     endif(XCODE)

@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------------
 # Create a given Directory with Admin permission on Windows
 function(smtg_create_directory_as_admin_win directory_name)
     if(NOT SMTG_WIN)

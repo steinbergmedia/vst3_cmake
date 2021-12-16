@@ -1,7 +1,7 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Includes
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 include(SMTG_DetectPlatform)
 include(SMTG_ConfigureCmakeGenerator)
 include(SMTG_ExportedSymbols)
@@ -14,14 +14,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR OR EXISTS "${CMAKE_BINARY_DIR}/CMa
     message(FATAL_ERROR "[SMTG] You can remove the file \"CMakeCache.txt\" and directory \"CMakeFiles\" in ${CMAKE_SOURCE_DIR}.")
 endif()
 
+#------------------------------------------------------------------------
 # Global setup functions/macros
 #
 # Call macros/functions which setup the SDK's basics.
 smtg_detect_platform()
 smtg_configure_cmake_generator()
-smtg_setup_symbol_visibility()
 smtg_detect_xcode_version()
 
+#------------------------------------------------------------------------
 # Enable VST3 SDK
 #
 # This macro should be called from a 3rd party's plug-in CMakeLists.txt file.

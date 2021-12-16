@@ -3,6 +3,7 @@ if(SMTG_WIN)
     option(SMTG_USE_STATIC_CRT "use static CRuntime on Windows (option /MT)" OFF)
 endif(SMTG_WIN)
 
+#------------------------------------------------------------------------
 # setup the platform toolset (compiler options)
 macro(smtg_setup_platform_toolset)
     # deprecated

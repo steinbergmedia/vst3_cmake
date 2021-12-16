@@ -1,16 +1,17 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Includes
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 include(CMakeParseArguments)
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Bundle configuration
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
-function(smtg_set_bundle target)
+#------------------------------------------------------------------------
+function(smtg_target_set_bundle target)
     if(NOT SMTG_MAC)
-        message(FATAL_ERROR "[SMTG] smtg_set_bundle only works on macOS, use it in an if(SMTG_MAC) block")
+        message(FATAL_ERROR "[SMTG] smtg_target_set_bundle only works on macOS, use it in an if(SMTG_MAC) block")
     endif(NOT SMTG_MAC)
 
     cmake_parse_arguments(ARG "PREPROCESS" "EXTENSION;INFOPLIST" "RESOURCES;PREPROCESSOR_FLAGS;BUNDLE_IDENTIFIER" ${ARGN})
@@ -87,4 +88,11 @@ function(smtg_set_bundle target)
             )
         endif(XCODE)
 	endif(ARG_BUNDLE_IDENTIFIER)
+endfunction(smtg_target_set_bundle)
+
+#------------------------------------------------------------------------
+# Deprecated since 3.7.4 -----------------------------
+function(smtg_set_bundle target)
+    message(DEPRECATION "[SMTG] Use smtg_target_set_bundle instead of smtg_set_bundle")
+    smtg_target_set_bundle (${target})
 endfunction(smtg_set_bundle)

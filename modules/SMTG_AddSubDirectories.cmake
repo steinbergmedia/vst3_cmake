@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------------
 # add every sub directory of the current source dir if it contains a CMakeLists.txt
 function(smtg_add_subdirectories)
     file(GLOB subDirectories RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)

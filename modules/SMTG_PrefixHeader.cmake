@@ -1,9 +1,10 @@
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Prefix Header
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
-function(smtg_set_prefix_header target header precompile)
+#------------------------------------------------------------------------
+function(smtg_target_set_prefix_header target header precompile)
     if(MSVC)
     elseif(XCODE)
         set_target_properties(${target}
@@ -17,4 +18,4 @@ function(smtg_set_prefix_header target header precompile)
                 -include "${header}"
         )
     endif(MSVC)
-endfunction(smtg_set_prefix_header)
+endfunction(smtg_target_set_prefix_header)
