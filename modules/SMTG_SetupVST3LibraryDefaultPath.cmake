@@ -1,6 +1,6 @@
 
 if(SMTG_WIN)
-    option(SMTG_PLUGIN_TARGET_USER_PROGRAM_FILES_COMMON "use FOLDERID_UserProgramFilesCommon as VST3 target path" OFF)
+    option(SMTG_PLUGIN_TARGET_USER_PROGRAM_FILES_COMMON "use FOLDERID_UserProgramFilesCommon as VST3 target path" ON)
 endif(SMTG_WIN)
 
 #------------------------------------------------------------------------

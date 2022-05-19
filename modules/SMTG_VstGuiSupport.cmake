@@ -40,10 +40,9 @@ macro(smtg_enable_vstgui_support)
             ${SMTG_VSTGUI_ROOT}/vstgui4
     )
     target_link_libraries(vstgui_support 
-        PRIVATE
-            vstgui_uidescription
         PUBLIC
             base
+            vstgui_uidescription
     )
     smtg_target_setup_universal_binary(vstgui_support)
     smtg_target_setup_universal_binary(vstgui)

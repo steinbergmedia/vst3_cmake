@@ -10,7 +10,7 @@ In order to build a plug-in successfully, it only needs to link to ```sdk``` lib
 
 The following figure shows the dependency map by using AGain, EditorHost and VST3Inspector:
 
-```c
+```tree
 again
 +-- sdk
 |   +-- sdk_common
@@ -22,7 +22,8 @@ again
     +-- vstgui_uidescription
         +-- vstgui
 ```
-```editorhost
+
+```tree
 editorhost
 +-- sdk_hosting
     +-- sdk_common
@@ -30,9 +31,9 @@ editorhost
         +-- pluginterfaces
 ```
 
-```VST3Inspector
+```tree
 VST3Inspector
-+-- vstgui_uidescription 
++-- vstgui_uidescription
 |   +-- vstgui
 +-- vstgui_standalone
     +-- vstgui

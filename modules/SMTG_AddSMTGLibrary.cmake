@@ -12,7 +12,7 @@ include(SMTG_SetDebugExecutable)
 set(SMTG_CUSTOM_BINARY_LOCATION "" CACHE PATH "Customize output location for binaries")
 
 # define the C++ standard version to use for plugins
-set(SMTG_CXX_STANDARD "" CACHE STRING "C++ standard version used for plugins: 14, 17, 20")
+set(SMTG_CXX_STANDARD "" CACHE STRING "C++ standard version used for plugins: 14, 17, 20, 23")
 
 #------------------------------------------------------------------------
 # Returns the windows architecture.

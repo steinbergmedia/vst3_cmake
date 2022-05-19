@@ -12,7 +12,7 @@ endif(SMTG_WIN)
 
 # Create Symbolic Link for the Plug-ins
 if(SMTG_WIN)
-    set(DEF_OPT_LINK ON) # be sure to start visual with admin right when enabling this
+    set(DEF_OPT_LINK ON) # be sure to start visual with admin right or adapt the user Group Policy when enabling this
 else()
     set(DEF_OPT_LINK ON)
 endif(SMTG_WIN)
