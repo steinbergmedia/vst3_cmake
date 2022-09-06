@@ -25,8 +25,10 @@ function(smtg_target_set_vst_win_architecture_name target)
             string(TOLOWER ${CMAKE_GENERATOR_PLATFORM} GENERATOR_PLATFORM)
         endif()
 
-        if(${GENERATOR_PLATFORM} MATCHES "arm64*")
-            set(WIN_ARCHITECTURE_NAME "arm_64")
+        if(${GENERATOR_PLATFORM} MATCHES "arm64")
+            set(WIN_ARCHITECTURE_NAME "arm64")
+        elseif(${GENERATOR_PLATFORM} MATCHES "arm64*")
+            set(WIN_ARCHITECTURE_NAME "arm64ec")
         elseif(${GENERATOR_PLATFORM} MATCHES "arm")
             set(WIN_ARCHITECTURE_NAME "arm")
         elseif(${GENERATOR_PLATFORM} MATCHES "win32")
@@ -216,11 +218,26 @@ function(smtg_get_linux_architecture_name)
 endfunction(smtg_get_linux_architecture_name)
 
 #------------------------------------------------------------------------
+# Fatal error if PROJECT_VERSION is not defined
+#
+function(smtg_target_check_project_version target)
+    if(NOT PROJECT_VERSION)
+        # See: https://cmake.org/cmake/help/latest/variable/PROJECT_VERSION.html
+        message(FATAL_ERROR 
+            "[SMTG] PROJECT_VERSION is not defined for target: \"${target}\". "
+            "To fix this, set the VERSION option of the most recent call of "
+            "the cmake project() command e.g. project(myPlugin VERSION 1.0.0)"
+        )
+    endif()
+endfunction()
+
+#------------------------------------------------------------------------
 # Prepare the target to build a Plug-in package.
 #
 # @param target The target whose output will be put into a package.
 # @param extension The package's extension
 function(smtg_target_make_plugin_package target pkg_name extension)
+    smtg_target_check_project_version("${target}")
     if(${pkg_name} STREQUAL "")
         set(pkg_name ${target})
     endif()

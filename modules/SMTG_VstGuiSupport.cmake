@@ -1,109 +1,119 @@
 
 #------------------------------------------------------------------------
-macro(smtg_enable_vstgui_support)
+
+macro(smtg_add_vstgui_subdirectory vstgui_SOURCE_DIR)
     set(VSTGUI_DISABLE_UNITTESTS 1)
     set(VSTGUI_STANDALONE_EXAMPLES OFF)
     set(VSTGUI_STANDALONE ON)
     set(VSTGUI_TOOLS OFF)
 
-    add_subdirectory(${SMTG_VSTGUI_ROOT}/vstgui4/vstgui ${CMAKE_CURRENT_BINARY_DIR}/VSTGUI.build)
+    add_subdirectory(${vstgui_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/VSTGUI.build)
+endmacro()
 
-#    list(APPEND CMAKE_MODULE_PATH "${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/standalone/cmake/modules")
-
-    set(VST3_VSTGUI_SOURCES
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.cpp
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3groupcontroller.h
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.cpp
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3padcontroller.h
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.cpp
-        ${SMTG_VSTGUI_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.h
-        ${SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
-        )
-    add_library(vstgui_support STATIC ${VST3_VSTGUI_SOURCES})
-    target_compile_definitions(vstgui_support
-        PUBLIC 
-            $<$<CONFIG:Debug>:VSTGUI_LIVE_EDITING>
-    )
-    if(VSTGUI_ENABLE_DEPRECATED_METHODS)
-        target_compile_definitions(vstgui_support 
+macro(smtg_target_setup_vstgui_deprecated_methods target)
+   if(VSTGUI_ENABLE_DEPRECATED_METHODS)
+        target_compile_definitions(${target} 
             PUBLIC
                 VSTGUI_ENABLE_DEPRECATED_METHODS=1
         )
     else()
-        target_compile_definitions(vstgui_support
+        target_compile_definitions(${target} 
             PUBLIC
                 VSTGUI_ENABLE_DEPRECATED_METHODS=0
         )
-    endif(VSTGUI_ENABLE_DEPRECATED_METHODS)
-    target_include_directories(vstgui_support
+    endif()
+endmacro()
+
+macro(smtg_target_prepare_bundle target)
+    target_compile_definitions(${target}
         PUBLIC
-            ${SMTG_VSTGUI_ROOT}/vstgui4
+            SMTG_MODULE_IS_BUNDLE=1
     )
+
+    target_sources(${target}
+        PRIVATE
+            ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp
+            ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.h
+    )
+endmacro()
+
+#[=======================================================================[.txt:
+  Adds VSTGUI support.
+  
+  Usage:
+    smtg_enable_vstgui_support(VSTGUI_SOURCE_DIR "<path-to-the-vstgui-source-folder>")
+
+  Exports:
+    smtg_enable_vstgui_support exports "<path-to-the-vstgui-source-folder>" 
+    as SMTG_VSTGUI_SOURCE_DIR to its parent scope.
+
+  Deprecation:
+    The usage wihout parameters is depricated.
+    SMTG_VSTGUI_ROOT is exported for compatibility reasons and is also depricated.
+    Replace "${SMTG_VSTGUI_ROOT}/vstgui4" with "${SMTG_VSTGUI_SOURCE_DIR}".
+    The export of "${SMTG_VSTGUI_ROOT}" may be removed in future SDK versions.
+
+#]=======================================================================]
+function(smtg_enable_vstgui_support)
+    if(${ARGC} GREATER 0)
+        set(options)
+        set(oneValueArgs VSTGUI_SOURCE_DIR)
+        set(multiValueArgs)
+        cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+        if(ARG_UNPARSED_ARGUMENTS)
+            message(FATAL_ERROR "[SMTG] The following parameters are unrecognized: ${ARG_UNPARSED_ARGUMENTS}")
+        endif()
+        get_filename_component(vstgui_root "${ARG_VSTGUI_SOURCE_DIR}" DIRECTORY)
+        set(SMTG_VSTGUI_ROOT "${vstgui_root}" PARENT_SCOPE)
+        set(vstgui_source_dir "${ARG_VSTGUI_SOURCE_DIR}")
+    else()
+        # See function documentation for more information. 
+        message(DEPRECATION "[SMTG] Use smtg_enable_vstgui_support(VSTGUI_SOURCE_DIR \"<vstgui-source-folder>\") "
+                            "instead of set(SMTG_VSTGUI_ROOT \"<parrent-of-vstgui-source-dir>\") and smtg_enable_vstgui_support()")
+        set(vstgui_source_dir "${SMTG_VSTGUI_ROOT}/vstgui4")
+    endif()
+    # Export SMTG_VSTGUI_SOURCE_DIR to parent scope
+    set(SMTG_VSTGUI_SOURCE_DIR "${vstgui_source_dir}" PARENT_SCOPE)
+
+    message(STATUS "[SMTG] SMTG_VSTGUI_SOURCE_DIR is set to: ${vstgui_source_dir}")
+
+    smtg_add_vstgui_subdirectory(${vstgui_source_dir})
+
+    add_library(vstgui_support STATIC 
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3groupcontroller.cpp
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3groupcontroller.h
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3padcontroller.cpp
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3padcontroller.h
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3editor.cpp
+        ${vstgui_source_dir}/vstgui/plugin-bindings/vst3editor.h
+
+        ${SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
+    )
+
     target_link_libraries(vstgui_support 
         PUBLIC
             base
             vstgui_uidescription
     )
+
+    target_include_directories(vstgui_support
+        PUBLIC
+            ${vstgui_source_dir}
+    )    
+    
+    target_compile_definitions(vstgui_support
+        PUBLIC 
+            $<$<CONFIG:Debug>:VSTGUI_LIVE_EDITING>
+    )
+
+    smtg_target_setup_vstgui_deprecated_methods(vstgui_support)
+
     smtg_target_setup_universal_binary(vstgui_support)
     smtg_target_setup_universal_binary(vstgui)
     smtg_target_setup_universal_binary(vstgui_uidescription)
-    if(SMTG_MAC)
-        if(XCODE)
-            target_link_libraries(vstgui_support
-                PRIVATE
-                    "-framework Cocoa"
-                    "-framework OpenGL"
-                    "-framework Accelerate"
-                    "-framework QuartzCore"
-                    "-framework Carbon"
-            )
-        else()
-            find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-            find_library(COCOA_FRAMEWORK Cocoa)
-            find_library(OPENGL_FRAMEWORK OpenGL)
-            find_library(ACCELERATE_FRAMEWORK Accelerate)
-            find_library(QUARTZCORE_FRAMEWORK QuartzCore)
-            find_library(CARBON_FRAMEWORK Carbon)
-            target_link_libraries(vstgui_support
-                PRIVATE
-                    ${COREFOUNDATION_FRAMEWORK}
-                    ${COCOA_FRAMEWORK}
-                    ${OPENGL_FRAMEWORK}
-                    ${ACCELERATE_FRAMEWORK}
-                    ${QUARTZCORE_FRAMEWORK}
-                    ${CARBON_FRAMEWORK}
-            )
-        endif(XCODE)
-    endif(SMTG_MAC)
+
     if(SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS)
-        target_compile_definitions(vstgui_support
-            PUBLIC
-                SMTG_MODULE_IS_BUNDLE=1
-        )
-        target_sources(vstgui_support
-            PRIVATE
-                ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp
-                ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.h
-        )
-    endif(SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS)
-    message(STATUS "[SMTG] SMTG_VSTGUI_ROOT is set to: " ${SMTG_VSTGUI_ROOT})
-    
-    set_target_properties(vstgui
-        PROPERTIES
-            FOLDER "VSTGUI"
-    )
-    set_target_properties(vstgui_support
-        PROPERTIES
-            FOLDER "VSTGUI"
-    )
-    set_target_properties(vstgui_uidescription
-        PROPERTIES
-            FOLDER "VSTGUI"
-    )
-    if(VSTGUI_STANDALONE)
-        set_target_properties(vstgui_standalone
-            PROPERTIES
-                FOLDER "VSTGUI"
-        )
-    endif(VSTGUI_STANDALONE)
-endmacro(smtg_enable_vstgui_support)
+        smtg_target_prepare_bundle(vstgui_support)
+    endif()
+endfunction()
+
