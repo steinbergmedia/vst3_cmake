@@ -109,19 +109,19 @@ function(smtg_target_create_link_to_plugin target destination)
     if(SMTG_WIN)
         get_target_property(PLUGIN_BINARY_DIR ${target} SMTG_PLUGIN_BINARY_DIR)
 
-        file(TO_NATIVE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
+        file(TO_CMAKE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
         file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Debug/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_DEBUG)
         file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Release/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_RELEASE)
 
         add_custom_command(
             TARGET ${target} POST_BUILD
             COMMAND echo [SMTG] Delete previous link...
-            COMMAND rmdir "${SRC_NATIVE_PATH}" & del "${SRC_NATIVE_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${SRC_NATIVE_PATH}"
             COMMAND echo [SMTG] Creation of the new link...
-            COMMAND mklink /D
-                ${SRC_NATIVE_PATH}
+            COMMAND ${CMAKE_COMMAND} -E create_symlink                
                 "$<$<CONFIG:Debug>:${TARGET_DESTINATION_DEBUG}>"
                 "$<$<CONFIG:Release>:${TARGET_DESTINATION_RELEASE}>"
+                "${SRC_NATIVE_PATH}"
             COMMAND echo [SMTG] Finished.
         )
     else()
