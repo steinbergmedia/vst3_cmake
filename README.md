@@ -1,14 +1,14 @@
 # Welcome to VST 3 SDK cmake
 
-This repository contains Steinberg's [cmake modules](https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html) and template files which can be used to create VST3 Plug-Ins for platforms like Windows, macOS, iOS and Linux.
+This repository contains Steinberg's [cmake modules](https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html) and template files which can be used to create **VST 3** plug-ins for platforms like Windows, macOS, iOS and Linux.
 
 For more information about cmake visit [cmake.org](https:://www.cmake.org/).
 
 ## Dependency map
 
-In order to build a plug-in successfully, it only needs to link to ```sdk``` library. VSTGUI is optional and can be used by linking to ```vstgui_support```.
+In order to build a plug-in successfully, it only needs to link to ```sdk``` library. [VSTGUI](https://steinbergmedia.github.io/vst3_dev_portal/pages/What+is+the+VST+3+SDK/VSTGUI.html) is optional and can be used by linking to ```vstgui_support```.
 
-The following figure shows the dependency map by using AGain, EditorHost and VST3Inspector:
+The following figure shows the dependency map by using AGain, [EditorHost](https://steinbergmedia.github.io/vst3_dev_portal/pages/What+is+the+VST+3+SDK/EditorHost.html) and [VST3Inspector](https://steinbergmedia.github.io/vst3_dev_portal/pages/What+is+the+VST+3+SDK/VST3Inspector.html):
 
 ```tree
 again
@@ -41,7 +41,7 @@ VST3Inspector
 
 ## Naming conventions and guidelines
 
-Steinberg module, macro, function and variable names have the prefix ```SMTG_``` or ```smtg_``` in order to avoid name clashes. 
+Steinberg module, macro, function and variable names have the prefix ```SMTG_``` or ```smtg_``` in order to avoid name clashes.
 
 ### File namings
 

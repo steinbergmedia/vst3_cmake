@@ -142,11 +142,6 @@ endfunction()
 function(smtg_target_configure_version_file target)
 
     set(SMTG_PROJECT_VERSION "")
-    
-    # TODO: replace SDK_ROOT with vst3sdk_SOURCE_DIR
-    if("${SDK_ROOT}" STREQUAL "")
-        set(SDK_ROOT "${vst3sdk_SOURCE_DIR}")
-    endif()
 
     if(NOT "${PROJECT_VERSION_MAJOR}" STREQUAL "")
         string(APPEND SMTG_PROJECT_VERSION "${PROJECT_VERSION_MAJOR}")
@@ -158,7 +153,7 @@ function(smtg_target_configure_version_file target)
         string(APPEND SMTG_PROJECT_VERSION ".${PROJECT_VERSION_PATCH}")
     endif()
 
-    configure_file(${SDK_ROOT}/cmake/templates/projectversion.h.in projectversion.h)
+    configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../templates/projectversion.h.in projectversion.h)
 
     target_include_directories(${target} PUBLIC
         "${PROJECT_BINARY_DIR}"

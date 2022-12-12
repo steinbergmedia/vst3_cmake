@@ -5,10 +5,11 @@
 include(SMTG_AddSMTGLibrary)
 
 #------------------------------------------------------------------------
-# Returns the windows architecture.
+# Returns the Windows architecture.
 #
 # This name will be used as a folder name inside the Plug-in package.
 # The variable SMTG_WIN_ARCHITECTURE_NAME will be set.
+# @param target The target to which SMTG_WIN_ARCHITECTURE_NAME will be added. 
 function(smtg_target_set_aax_win_architecture_name target)
     if(${GENERATOR_PLATFORM} MATCHES "win32")
         set(WIN_ARCHITECTURE_NAME "win32")

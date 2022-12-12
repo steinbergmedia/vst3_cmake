@@ -8,13 +8,13 @@ if (XCODE AND SMTG_COREAUDIO_SDK_PATH)
 	set(SMTG_AUV2_FOLDER FOLDER "AudioUnit V2")
 
 	set(AUv2_sources
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/aucocoaview.mm
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/aucocoaview.h
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/ausdk.mm
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/auwrapper.mm
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/auwrapper.h
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/NSDataIBStream.mm
-		${SDK_ROOT}/public.sdk/source/vst/auwrapper/NSDataIBStream.h
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/aucocoaview.mm
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/aucocoaview.h
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/ausdk.mm
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/auwrapper.mm
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/auwrapper.h
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/NSDataIBStream.mm
+		${public_sdk_SOURCE_DIR}/source/vst/auwrapper/NSDataIBStream.h
 	)
 
 	#------------------------------------------------------------------------

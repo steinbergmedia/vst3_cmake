@@ -32,8 +32,8 @@ macro(smtg_target_prepare_bundle target)
 
     target_sources(${target}
         PRIVATE
-            ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp
-            ${SDK_ROOT}/public.sdk/source/vst/vstgui_win32_bundle_support.h
+            ${public_sdk_SOURCE_DIR}/source/vst/vstgui_win32_bundle_support.cpp
+            ${public_sdk_SOURCE_DIR}/source/vst/vstgui_win32_bundle_support.h
     )
 endmacro()
 
@@ -87,7 +87,7 @@ function(smtg_enable_vstgui_support)
         ${vstgui_source_dir}/vstgui/plugin-bindings/vst3editor.cpp
         ${vstgui_source_dir}/vstgui/plugin-bindings/vst3editor.h
 
-        ${SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
+        ${public_sdk_SOURCE_DIR}/source/vst/vstguieditor.cpp
     )
 
     target_link_libraries(vstgui_support 
@@ -99,7 +99,7 @@ function(smtg_enable_vstgui_support)
     target_include_directories(vstgui_support
         PUBLIC
             ${vstgui_source_dir}
-    )    
+    )
     
     target_compile_definitions(vstgui_support
         PUBLIC 
@@ -116,4 +116,3 @@ function(smtg_enable_vstgui_support)
         smtg_target_prepare_bundle(vstgui_support)
     endif()
 endfunction()
-

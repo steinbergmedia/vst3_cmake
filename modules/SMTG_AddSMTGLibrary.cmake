@@ -23,12 +23,14 @@ function(smtg_target_set_vst_win_architecture_name target)
     if(SMTG_WIN)
         if(DEFINED CMAKE_GENERATOR_PLATFORM AND CMAKE_GENERATOR_PLATFORM)
             string(TOLOWER ${CMAKE_GENERATOR_PLATFORM} GENERATOR_PLATFORM)
+        elseif(DEFINED CMAKE_MODULE_LINKER_FLAGS AND CMAKE_MODULE_LINKER_FLAGS)
+            string(TOLOWER ${CMAKE_MODULE_LINKER_FLAGS} GENERATOR_PLATFORM)
         endif()
 
-        if(${GENERATOR_PLATFORM} MATCHES "arm64")
-            set(WIN_ARCHITECTURE_NAME "arm64")
-        elseif(${GENERATOR_PLATFORM} MATCHES "arm64*")
+        if(${GENERATOR_PLATFORM} MATCHES "arm64ec")
             set(WIN_ARCHITECTURE_NAME "arm64ec")
+        elseif(${GENERATOR_PLATFORM} MATCHES "arm64")
+            set(WIN_ARCHITECTURE_NAME "arm64")
         elseif(${GENERATOR_PLATFORM} MATCHES "arm")
             set(WIN_ARCHITECTURE_NAME "arm")
         elseif(${GENERATOR_PLATFORM} MATCHES "win32")
@@ -109,35 +111,29 @@ function(smtg_target_create_link_to_plugin target destination)
     if(SMTG_WIN)
         get_target_property(PLUGIN_BINARY_DIR ${target} SMTG_PLUGIN_BINARY_DIR)
 
-        file(TO_NATIVE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
-        file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Debug/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_DEBUG)
-        file(TO_NATIVE_PATH "${PLUGIN_BINARY_DIR}/Release/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_RELEASE)
+        file(TO_CMAKE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
+        file(TO_CMAKE_PATH "${PLUGIN_BINARY_DIR}/Debug/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_DEBUG)
+        file(TO_CMAKE_PATH "${PLUGIN_BINARY_DIR}/Release/${PLUGIN_PACKAGE_NAME}" TARGET_DESTINATION_RELEASE)
 
         add_custom_command(
             TARGET ${target} POST_BUILD
-            COMMAND echo [SMTG] Delete previous link...
-            COMMAND rmdir "${SRC_NATIVE_PATH}" & del "${SRC_NATIVE_PATH}"
-            COMMAND echo [SMTG] Creation of the new link...
-            COMMAND mklink /D
-                ${SRC_NATIVE_PATH}
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Delete previous link...
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${SRC_NATIVE_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Creation of the new link...
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
                 "$<$<CONFIG:Debug>:${TARGET_DESTINATION_DEBUG}>"
                 "$<$<CONFIG:Release>:${TARGET_DESTINATION_RELEASE}>"
-            COMMAND echo [SMTG] Finished.
+                "${SRC_NATIVE_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Finished.
         )
     else()
         add_custom_command(
             TARGET ${target} POST_BUILD
-            COMMAND mkdir -p "${TARGET_DESTINATION}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${TARGET_DESTINATION}"
             COMMAND ln -svfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
         )
     endif(SMTG_WIN)
 endfunction(smtg_target_create_link_to_plugin)
-
-set(SMTG_DESKTOP_INI_PATH ${CMAKE_CURRENT_LIST_DIR}/../templates/desktop.ini.in)
-get_directory_property(hasParent PARENT_DIRECTORY)
-if(hasParent)
-    set(SMTG_DESKTOP_INI_PATH ${SMTG_DESKTOP_INI_PATH} PARENT_SCOPE)
-endif(hasParent)
 
 #------------------------------------------------------------------------
 # Customizes folder icon on windows
@@ -146,6 +142,7 @@ endif(hasParent)
 #
 # @param target The target whose folder icon will be customized.
 function(smtg_target_add_folder_icon target icon)
+    set(DESKTOP_INI_PATH ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../templates/desktop.ini.in)
     get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
     add_custom_command(
         TARGET ${target} POST_BUILD
@@ -154,7 +151,7 @@ function(smtg_target_add_folder_icon target icon)
             ${icon}
             ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
         COMMAND ${CMAKE_COMMAND} -E copy
-            ${SMTG_DESKTOP_INI_PATH}
+            ${DESKTOP_INI_PATH}
             ${PLUGIN_PACKAGE_PATH}/desktop.ini
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}/desktop.ini
         COMMAND attrib +s ${PLUGIN_PACKAGE_PATH}/PlugIn.ico
@@ -443,18 +440,36 @@ function(smtg_target_add_plugin_resource target input_file)
         # Make the incoming path absolute.
         get_filename_component(absolute_input_file_path "${input_file}" ABSOLUTE)
 
+        # Extract the filename and its extension
+        get_filename_component(file_name_with_extension "${input_file}" NAME)
+
+        # Create absolute output file path
+        set(absolute_output_file_path "${destination_folder}/${file_name_with_extension}")
+
+        # Add the file as a source to the target
+        target_sources(${target}
+            PRIVATE
+                ${input_file}
+        )
+
+        if(MSVC)
+            # Hacky workaround: replace all SMTG_PLUGIN_PACKAGE_NAME (e.g. again.vst3) 
+            # occurences by a MSVS macro $(TargetFileName). Using the cmake only approach does not work.
+            get_target_property(PLUGIN_PACKAGE_NAME ${target} SMTG_PLUGIN_PACKAGE_NAME)
+            string(REPLACE "${PLUGIN_PACKAGE_NAME}" "$(TargetFileName)" absolute_output_file_path ${absolute_output_file_path})
+        endif()
+
+        # Create a custom build tool for the specific file
         add_custom_command(
-            TARGET ${target} PRE_LINK
-            COMMAND ${CMAKE_COMMAND} 
-                -E make_directory 
-                    "${destination_folder}"
+            OUTPUT  ${absolute_output_file_path}
+            MAIN_DEPENDENCY ${absolute_input_file_path}
             COMMAND ${CMAKE_COMMAND} 
                 -E copy_if_different
                     ${absolute_input_file_path}
-                    ${destination_folder}
+                    ${absolute_output_file_path}
             COMMAND ${CMAKE_COMMAND} 
-                -E echo
-                    "[SMTG] Copied ${input_file} to ${destination_folder}"
+                -E echo 
+                    "[SMTG] Copied ${absolute_input_file_path} to ${absolute_output_file_path}"
         )
     elseif(SMTG_MAC)
         target_sources(${target}

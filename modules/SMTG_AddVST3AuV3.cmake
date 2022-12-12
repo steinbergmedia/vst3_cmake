@@ -9,18 +9,18 @@ if(SMTG_MAC AND SMTG_ADD_VSTGUI)
         set(SMTG_AUV3_FOLDER FOLDER "AudioUnit V3")
 
         set(auv3wrappermacos_sources
-            ${SDK_ROOT}/public.sdk/source/vst/auv3wrapper/AUv3WrappermacOS/main.mm
+            ${public_sdk_SOURCE_DIR}/source/vst/auv3wrapper/AUv3WrappermacOS/main.mm
         )
 
         set(auv3wrappermacosextension_sources
-            ${SDK_ROOT}/public.sdk/source/vst/auv3wrapper/Shared/AUv3WrapperFactory.mm
+            ${public_sdk_SOURCE_DIR}/source/vst/auv3wrapper/Shared/AUv3WrapperFactory.mm
         )
 
         set(auv3wrapperios_sources
         )
 
         set(auv3wrapperiosextension_sources
-            ${SDK_ROOT}/public.sdk/source/vst/auv3wrapper/Shared/AUv3WrapperFactory.mm
+            ${public_sdk_SOURCE_DIR}/source/vst/auv3wrapper/Shared/AUv3WrapperFactory.mm
         )
 
         #------------------------------------------------------------------------
