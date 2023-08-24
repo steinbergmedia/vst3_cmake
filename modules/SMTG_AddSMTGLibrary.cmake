@@ -419,7 +419,11 @@ function(smtg_target_make_plugin_package target pkg_name extension)
         endif()
     endif(SMTG_MAC)
 
-    smtg_target_create_resources_folder(${target})
+    # create folder for bundle resources, but only if creating a bundle is configured (Windows)
+    if(NOT SMTG_WIN OR SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+       smtg_target_create_resources_folder(${target})
+    endif()
+
 endfunction(smtg_target_make_plugin_package)
 
 #------------------------------------------------------------------------
