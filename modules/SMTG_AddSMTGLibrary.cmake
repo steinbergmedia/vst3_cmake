@@ -460,9 +460,12 @@ function(smtg_target_add_plugin_resource target input_file)
     if(SMTG_LINUX OR (SMTG_WIN AND SMTG_CREATE_BUNDLE_FOR_WINDOWS))
         get_target_property(PLUGIN_PACKAGE_PATH ${target} SMTG_PLUGIN_PACKAGE_PATH)
         get_target_property(PLUGIN_PACKAGE_RESOURCES ${target} SMTG_PLUGIN_PACKAGE_RESOURCES)
+
         set(destination_folder "${PLUGIN_PACKAGE_PATH}/${PLUGIN_PACKAGE_RESOURCES}")
+        set(destination_sourcegroup "${PLUGIN_PACKAGE_RESOURCES}")
         if(ARGC GREATER 2 AND ARGV2)
             set(destination_folder "${destination_folder}/${ARGV2}")
+            set(destination_sourcegroup "${destination_sourcegroup}/${ARGV2}")
         endif()
 
         # Make the incoming path absolute.
@@ -474,7 +477,8 @@ function(smtg_target_add_plugin_resource target input_file)
         # Create absolute output file path
         set(absolute_output_file_path "${destination_folder}/${file_name_with_extension}")
 
-        # Add the file as a source to the target
+        # Add the file as a source to the target inside their corresponding folders
+        source_group("${destination_sourcegroup}" FILES ${input_file})
         target_sources(${target}
             PRIVATE
                 ${input_file}
@@ -490,12 +494,12 @@ function(smtg_target_add_plugin_resource target input_file)
 
         # Create a custom build tool for the specific file
         add_custom_command(
-            OUTPUT  ${absolute_output_file_path}
-            MAIN_DEPENDENCY ${absolute_input_file_path}
+            OUTPUT  "${absolute_output_file_path}"
+            MAIN_DEPENDENCY "${absolute_input_file_path}"
             COMMAND ${CMAKE_COMMAND} 
                 -E copy_if_different
-                    ${absolute_input_file_path}
-                    ${absolute_output_file_path}
+                    "${absolute_input_file_path}"
+                    "${absolute_output_file_path}"
             COMMAND ${CMAKE_COMMAND} 
                 -E echo 
                     "[SMTG] Copied ${absolute_input_file_path} to ${absolute_output_file_path}"
