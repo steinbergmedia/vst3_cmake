@@ -161,7 +161,7 @@ function(smtg_add_vst3plugin_with_pkgname target pkg_name)
     endif()
     #message(STATUS "[SMTG] SMTG_PACKAGE_ICON_PATH is ${SMTG_PACKAGE_ICON_PATH}")
 
-    if(DEFINED PARAMS_MODULEINFO_COMPATIBILITY)
+    if(DEFINED PARAMS_SOURCES_LIST)
         set(SOURCES "${PARAMS_SOURCES_LIST}")
     else()
         set(SOURCES "${PARAMS_UNPARSED_ARGUMENTS}")

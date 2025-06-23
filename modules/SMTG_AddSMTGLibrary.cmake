@@ -128,10 +128,11 @@ function(smtg_target_create_link_to_plugin target destination)
             COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Finished.
         )
     else()
+        set(PLUGIN_TARGET_DESTINATION ${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME})
         add_custom_command(
             TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${TARGET_DESTINATION}"
-            COMMAND ln -svfF "${TARGET_SOURCE}" "${TARGET_DESTINATION}"
+            COMMAND ln -svfF "${TARGET_SOURCE}" "${PLUGIN_TARGET_DESTINATION}"
         )
     endif(SMTG_WIN)
 endfunction(smtg_target_create_link_to_plugin)
