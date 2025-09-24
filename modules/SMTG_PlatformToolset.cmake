@@ -91,6 +91,7 @@ macro(smtg_setup_platform_toolset)
             add_compile_options(/wd6386)                    # Buffer overrun
             add_compile_options(/wd28125)                   # The function must be called from within a try/except block
             add_compile_options(/wd28251)                   # Inconsistent annotation for function
+            add_compile_options(/Zc:__cplusplus)            # __cplusplus should denote the c++ standard
             #add_definitions("/analyze")                     # Enable Code Analyze
 
             set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
