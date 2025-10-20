@@ -132,7 +132,11 @@ function(smtg_target_create_link_to_plugin target destination)
         add_custom_command(
             TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${TARGET_DESTINATION}"
-            COMMAND ln -svfF "${TARGET_SOURCE}" "${PLUGIN_TARGET_DESTINATION}"
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Delete previous link...
+            COMMAND rm -rf "${PLUGIN_TARGET_DESTINATION}"
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Create new symlink...
+            COMMAND ln -sv "${TARGET_SOURCE}" "${PLUGIN_TARGET_DESTINATION}"
+            COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Finished.
         )
     endif(SMTG_WIN)
 endfunction(smtg_target_create_link_to_plugin)
