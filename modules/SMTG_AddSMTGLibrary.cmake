@@ -109,7 +109,7 @@ function(smtg_target_create_link_to_plugin target destination)
     get_target_property(TARGET_SOURCE       ${target} SMTG_PLUGIN_PACKAGE_PATH)
     set(TARGET_DESTINATION ${destination})
 
-    if(SMTG_WIN)
+    if(SMTG_WIN AND NOT MINGW)
         get_target_property(PLUGIN_BINARY_DIR ${target} SMTG_PLUGIN_BINARY_DIR)
 
         file(TO_CMAKE_PATH "${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME}" SRC_NATIVE_PATH)
@@ -131,6 +131,7 @@ function(smtg_target_create_link_to_plugin target destination)
         set(PLUGIN_TARGET_DESTINATION ${TARGET_DESTINATION}/${PLUGIN_PACKAGE_NAME})
         add_custom_command(
             TARGET ${target} POST_BUILD
+            COMMAND rm -rf "${TARGET_DESTINATION}"
             COMMAND ${CMAKE_COMMAND} -E make_directory "${TARGET_DESTINATION}"
             COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Delete previous link...
             COMMAND rm -rf "${PLUGIN_TARGET_DESTINATION}"
@@ -138,7 +139,7 @@ function(smtg_target_create_link_to_plugin target destination)
             COMMAND ln -sv "${TARGET_SOURCE}" "${PLUGIN_TARGET_DESTINATION}"
             COMMAND ${CMAKE_COMMAND} -E echo [SMTG] Finished.
         )
-    endif(SMTG_WIN)
+    endif(SMTG_WIN AND NOT MINGW)
 endfunction(smtg_target_create_link_to_plugin)
 
 #------------------------------------------------------------------------
