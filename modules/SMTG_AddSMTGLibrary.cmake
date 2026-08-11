@@ -22,10 +22,15 @@ set(SMTG_CXX_STANDARD "" CACHE STRING "C++ standard version used for plugins: 14
 # The variable SMTG_WIN_ARCHITECTURE_NAME will be set.
 function(smtg_target_set_vst_win_architecture_name target)
     if(SMTG_WIN)
+    
         if(DEFINED CMAKE_GENERATOR_PLATFORM AND CMAKE_GENERATOR_PLATFORM)
-            string(TOLOWER ${CMAKE_GENERATOR_PLATFORM} GENERATOR_PLATFORM)
-        elseif(DEFINED CMAKE_MODULE_LINKER_FLAGS AND CMAKE_MODULE_LINKER_FLAGS)
-            string(TOLOWER ${CMAKE_MODULE_LINKER_FLAGS} GENERATOR_PLATFORM)
+            string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" GENERATOR_PLATFORM)
+        elseif(DEFINED CMAKE_VS_PLATFORM_NAME AND CMAKE_VS_PLATFORM_NAME)
+            # VS generators expose the actual resolved platform name here
+            string(TOLOWER "${CMAKE_VS_PLATFORM_NAME}" GENERATOR_PLATFORM)
+        else()
+            # No platform specified (e.g., Ninja/Unix Makefiles) => empty
+            set(GENERATOR_PLATFORM "")
         endif()
 
         if(${GENERATOR_PLATFORM} MATCHES "arm64ec")
@@ -36,9 +41,18 @@ function(smtg_target_set_vst_win_architecture_name target)
             set(WIN_ARCHITECTURE_NAME "arm")
         elseif(${GENERATOR_PLATFORM} MATCHES "win32")
             set(WIN_ARCHITECTURE_NAME "x86")
-        else()
+        elseif(${GENERATOR_PLATFORM} MATCHES "x64")
             set(WIN_ARCHITECTURE_NAME "x86_64")
+            
+        # Final fallback: generator doesn't specify architecture
+        elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            set(WIN_ARCHITECTURE_NAME "x86")
+        elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(WIN_ARCHITECTURE_NAME "x86_64")
+        else()
+            set(WIN_ARCHITECTURE_NAME "x86_64") # default to 64-bit if we can't figure it out
         endif()
+
         set(WIN_ARCHITECTURE_NAME ${WIN_ARCHITECTURE_NAME}-win)
 
         set_target_properties(${target}

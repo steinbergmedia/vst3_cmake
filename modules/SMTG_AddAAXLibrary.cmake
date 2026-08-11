@@ -11,10 +11,10 @@ include(SMTG_AddSMTGLibrary)
 # The variable SMTG_WIN_ARCHITECTURE_NAME will be set.
 # @param target The target to which SMTG_WIN_ARCHITECTURE_NAME will be added. 
 function(smtg_target_set_aax_win_architecture_name target)
-    if(${GENERATOR_PLATFORM} MATCHES "win32")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
         set(WIN_ARCHITECTURE_NAME "win32")
     else()
-        set(WIN_ARCHITECTURE_NAME "x64")    
+        set(WIN_ARCHITECTURE_NAME "x64")
     endif()
 
     set_target_properties(${target}

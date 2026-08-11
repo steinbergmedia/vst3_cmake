@@ -147,6 +147,7 @@ function(smtg_create_pluginterfaces_target)
             ${SDK_ROOT}/pluginterfaces/vst/ivstprocesscontext.h
             ${SDK_ROOT}/pluginterfaces/vst/ivstremapparamid.h
             ${SDK_ROOT}/pluginterfaces/vst/ivstrepresentation.h
+            ${SDK_ROOT}/pluginterfaces/vst/ivsttransportcontrol.h
             ${SDK_ROOT}/pluginterfaces/vst/ivstunits.h
             ${SDK_ROOT}/pluginterfaces/vst/vstpresetkeys.h
             ${SDK_ROOT}/pluginterfaces/vst/vstpshpack4.h
